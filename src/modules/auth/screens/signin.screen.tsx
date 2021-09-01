@@ -14,10 +14,10 @@ import { Input, Button, Resize } from '../../../components/common'
 import { useAuth } from '../../../context/auth.context'
 
 export const SignInScreen: React.FC = ():ReactElement => {
+  const { signIn } = useAuth()
+  const { top, bottom } = useSafeAreaInsets()
   const styles = useMemo(() => factory({ insets: { top, bottom }}), [])
 
-  const { top, bottom } = useSafeAreaInsets()
-  const { signIn } = useAuth()
 
   const onPressed = useCallback(() => {
     signIn()

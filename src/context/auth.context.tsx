@@ -1,7 +1,9 @@
 import React, { ReactElement, createContext, useReducer, useCallback, useContext } from 'react'
 import { useEffect } from 'react'
+import { ToastAndroid as Toast } from 'react-native'
 
 import { Navigator } from '../navigation'
+import request from '../services/axios'
 
 const AuthContext = createContext<State & Context>({} as State & Context)
 type Props = { }
@@ -18,7 +20,7 @@ interface State {
 }
 
 interface Context {
-  signIn: () => void
+  signIn: (username: string, password: string) => void
   signOut: () => void
 }
 const Provider:React.FC<Props> = ():ReactElement => {
@@ -28,8 +30,27 @@ const Provider:React.FC<Props> = ():ReactElement => {
 
   }, [])
 
-  const signIn = useCallback(() => {
-    dispatch({ type: 'SIGN_IN', payload: { name: 'idsarth' } })
+  const signIn = useCallback(async (username: string, password: string) => {
+    try {
+      const response = await request.post('?op=inicioSesion', { usuario: username, clave: password })
+      console.log(response.data)
+      // switch (response.data.success) {
+      //   case 0:
+      //     dispatch({ type: 'SIGN_IN', payload: { name: 'idsarth' } })
+      //     break
+      //   case 1:
+      //     Toast.show('', Toast.SHORT)
+      //     break
+      //   case 3:
+      //     Toast.show('Usuario que no existe.', Toast.SHORT)
+      //     break
+      //   default:
+      //     Toast.show('Ocurrio un error, por favor intente de nuevo o mas tarde.', Toast.SHORT)
+      //     break
+      // }
+    } catch (error) {
+      Toast.show('Ocurrio un error, por favor intente de nuevo o mas tarde.', Toast.SHORT)
+    }
   }, [])
 
   const signOut = useCallback(() => {

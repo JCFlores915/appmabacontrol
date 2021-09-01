@@ -16,7 +16,7 @@ export const Navigator:React.FC<Props> = (props):ReactElement => {
     <NavigationContainer>
       {isLoggedIn ? (
         <Stack.Navigator>
-          <Stack.Screen name='/home' component={HomeScreen} />
+          <Stack.Screen options={{ headerShown: false }} name='/home' component={HomeScreen} />
         </Stack.Navigator>
       ) : (
         <Stack.Navigator>

@@ -81,6 +81,7 @@ const factory = (conditions: any) => {
       paddingHorizontal: 5,
       paddingVertical: 6.5,
       flexGrow: 1,
+      color: '#000'
     },
     label: {
       fontSize: 14,
