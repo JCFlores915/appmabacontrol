@@ -87,10 +87,13 @@ export const HomeScreen: React.FC = ():ReactElement => {
     }
   }, [location])
 
-  const onPressed = useCallback(() => navigation.navigate('/scanner'),[])
+  const onPressed = useCallback(() => navigation.navigate('/closethebox', { }),[])
+  
   const onPressedConfig = useCallback(() => {}, [])
 
-  if (_.size(location) <= 0) return <View />
+  const onPressedMarker = useCallback(() => navigation.navigate('/scanner', { }), [])
+
+  if (location.latitude <= 0) return <View />
 
   return (
     <View style={styles.screen}>
@@ -108,6 +111,7 @@ export const HomeScreen: React.FC = ():ReactElement => {
           return (
             <View key={JSON.stringify({ item, index})}>
               <Marker
+                onPress={onPressedMarker}
                 coordinate={{ latitude: Number(item.latitude), longitude: Number(item.longitude) }}
               />
             </View>
