@@ -1,29 +1,90 @@
-import React, { ReactElement, useCallback, useMemo } from 'react'
+import React, { ReactElement, useCallback, useMemo, useState } from 'react'
 import {
   View,
   Text,
   Image,
   StyleSheet,
-  TouchableOpacity
+  TouchableOpacity,
+  ToastAndroid as Toast
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import logo from '../../../assets/images/logo.png'
 
+import request from '../../../services/axios'
+
 // Import components
 import { Input, Button, Resize } from '../../../components/common'
+import ResetNewPassword from '../components/reset-new-password.component'
+
+// Import custom hooks
 import { useAuth } from '../../../context/auth.context'
 
 export const SignInScreen: React.FC = ():ReactElement => {
   const { signIn } = useAuth()
   const { top, bottom } = useSafeAreaInsets()
   const styles = useMemo(() => factory({ insets: { top, bottom }}), [])
+  const [userId, setUserId] = useState<number>(0)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [values, setValues] = useState({ 
+    username: { isValid: true, value: '', }, 
+    password: { isValid: true, value: '' } 
+  })
+  const [isVisible, setIsVisible] = useState<boolean>(false)
 
+  const onReset = useCallback(() => {
+    setValues({
+      username: { isValid: true, value: '', }, 
+      password: { isValid: true, value: '' } 
+    })
+  }, [])
 
   const onPressed = useCallback(() => {
-    signIn()
+    if (!values.username.value.trim() || !values.password.value) return Toast.show('Todos los campos son obligatorios.', Toast.SHORT)
+    setIsLoading(true)
+    request.post('?op=inicioSesion', { usuario: values.username.value, clave: values.password.value })
+      .then(response => {
+        const type = Number(response.data.success)
+        switch (type) {
+          case 0:
+            Toast.show('Usuario o contraseña son incorrectos.', Toast.SHORT)
+            break
+          case 1:
+            setUserId(response.data.data.id)
+            const value = Number(response.data.data.first_start)
+            if (value === 0) {
+              signIn(response.data.data)
+            } else if (value === 1) {
+              setIsVisible(true)
+            }
+            break
+        }
+      })
+      .catch((err) => {
+        Toast.show('Ocurrio un error, por favor intente de nuevo o mas tarde.', Toast.SHORT)
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
+  }, [values])
+
+  const onChange = useCallback((value: string, key: 'username' | 'password') => {
+    setValues(prevState => ({
+      ...prevState,
+      [key]: {
+        ...prevState[key],
+        value
+      }
+    }))
   }, [])
+
   return (
     <View style={styles.screen}>
+      <ResetNewPassword
+        username={userId}
+        onReset={onReset}
+        isVisible={isVisible}
+        onClose={() => setIsVisible(false)}
+      />
       <View>
         <Image source={logo} style={styles.logo} />
       </View>
@@ -33,7 +94,10 @@ export const SignInScreen: React.FC = ():ReactElement => {
       <View style={styles.form}>
         <Input
           label='Usuario'
-          customProps={{ }}
+          customProps={{
+            onChangeText: (value: string) => onChange(value, 'username'),
+            value: values.username.value
+          }}
           icon={{ name: 'account' }}
           containerStyle={{ marginBottom: 18 }}
         />
@@ -43,12 +107,14 @@ export const SignInScreen: React.FC = ():ReactElement => {
           icon={{ name: 'lock' }}
           customProps={{
             secureTextEntry: true,
-
+            onChangeText: (value: string) => onChange(value, 'password'),
+            value: values.password.value
           }}
         />
         <Resize styles={{ height: 45 }} />
         <View>
-          <Button 
+          <Button
+            isLoading={isLoading}
             onPressed={onPressed}
             message='Ingresar'
           />

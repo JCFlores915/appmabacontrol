@@ -3,15 +3,17 @@ import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 
 // Import screens
-import { HomeScreen, SignInScreen } from '../modules'
+import { HomeScreen, SignInScreen, SplashScreen } from '../modules'
+
+import { useAuth } from '../context/auth.context'
 
 const Stack = createNativeStackNavigator()
 
-type Props = {
-  isLoggedIn: boolean
-}
-export const Navigator:React.FC<Props> = (props):ReactElement => {
-  const { isLoggedIn } = props
+type Props = {}
+export const Navigator:React.FC<Props> = React.memo((props):ReactElement => {
+  const { isLoggedIn, loading } = useAuth()
+
+  if (loading) return <SplashScreen />
   return (
     <NavigationContainer>
       {isLoggedIn ? (
@@ -25,5 +27,5 @@ export const Navigator:React.FC<Props> = (props):ReactElement => {
       )}
     </NavigationContainer>
   )
-}
+})
 

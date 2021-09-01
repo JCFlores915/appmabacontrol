@@ -1,65 +1,59 @@
-import React, { ReactElement, createContext, useReducer, useCallback, useContext } from 'react'
-import { useEffect } from 'react'
-import { ToastAndroid as Toast } from 'react-native'
+import React, { ReactElement, createContext, useReducer, useCallback, useContext, useEffect } from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { Navigator } from '../navigation'
-import request from '../services/axios'
-
 const AuthContext = createContext<State & Context>({} as State & Context)
 type Props = { }
 interface Action {
-  type: 'SIGN_IN' | 'SIGN_OUT'
+  type: 'SIGN_IN' | 'SIGN_OUT' | 'LOADING'
   payload?: any
 }
 interface State {
   loading: boolean
   isLoggedIn: boolean
-  user: {
-    name: string
-  }
+  user: User
 }
 
+interface User {
+  name: string
+  surname: string
+  first_start: number
+}
 interface Context {
-  signIn: (username: string, password: string) => void
+  signIn: (user: User) => void
   signOut: () => void
 }
 const Provider:React.FC<Props> = ():ReactElement => {
   const [state, dispatch] = useReducer(reducer, { loading: false, isLoggedIn: false, user: {} })
 
   useEffect(() => {
-
+    load()
   }, [])
 
-  const signIn = useCallback(async (username: string, password: string) => {
-    try {
-      const response = await request.post('?op=inicioSesion', { usuario: username, clave: password })
-      console.log(response.data)
-      // switch (response.data.success) {
-      //   case 0:
-      //     dispatch({ type: 'SIGN_IN', payload: { name: 'idsarth' } })
-      //     break
-      //   case 1:
-      //     Toast.show('', Toast.SHORT)
-      //     break
-      //   case 3:
-      //     Toast.show('Usuario que no existe.', Toast.SHORT)
-      //     break
-      //   default:
-      //     Toast.show('Ocurrio un error, por favor intente de nuevo o mas tarde.', Toast.SHORT)
-      //     break
-      // }
-    } catch (error) {
-      Toast.show('Ocurrio un error, por favor intente de nuevo o mas tarde.', Toast.SHORT)
+  const load = useCallback(async () => {
+    dispatch({ type: 'LOADING', payload: true })
+    const data = await AsyncStorage.getItem('@storage_maba')
+    if (data) {
+      const user = JSON.parse(data)
+      dispatch({ type: 'SIGN_IN', payload: user })
     }
+    dispatch({ type: 'LOADING', payload: false })
   }, [])
 
-  const signOut = useCallback(() => {
+  const signIn = useCallback((user: User): void => {
+    AsyncStorage.setItem('@storage_maba', JSON.stringify(user))
+      .then(() => {
+        dispatch({ type: 'SIGN_IN', payload: user })
+      })
+  }, [])
+
+  const signOut = useCallback((): void => {
     dispatch({ type: 'SIGN_OUT' })
   }, [])
 
   return (
     <AuthContext.Provider value={{ signIn, signOut, ...state }}>
-      <Navigator isLoggedIn={state.isLoggedIn} />
+      <Navigator />
     </AuthContext.Provider>
   )
 }
@@ -75,6 +69,11 @@ export {
 
 const reducer = (prevState: State, action: Action) => {
   switch (action.type) {
+    case 'LOADING':
+      return {
+        ...prevState,
+        loading: action.payload
+      }
     case 'SIGN_IN':
       return {
         ...prevState,
