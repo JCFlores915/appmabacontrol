@@ -6,10 +6,11 @@ import {
   TouchableOpacity
 } from 'react-native'
 import MapView, { Marker, Polyline } from 'react-native-maps'
-import Geolocation from 'react-native-geolocation-service'
 import _ from 'lodash'
 import Icon from 'react-native-vector-icons/AntDesign'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
+import Geolocation from 'react-native-geolocation-service'
 
 import { Button } from '../../components/common'
 
@@ -17,67 +18,52 @@ import { useAuth } from '../../context/auth.context'
 
 import request from '../../services/axios'
 
-const data = [
-  {
-    "latitude": 11.931419184389728,
-    "longitude": -85.9435317961521
-  },
-  {
-    "latitude": 11.936436968424271,
-    "longitude":  -85.95526180870522,
-  },
-  {
-    "latitude": 11.928642799882043,
-    "longitude": -85.96051289274196,
-  },
-  {
-    "latitude": 11.921902741975723,
-    "longitude": -85.95412769664465,
-  },
-]
-
 export const HomeScreen: React.FC = ():ReactElement => {
   let watchId = 0
-  const [location, setLocation] = useState({ latitude: 0, longitude: 0 })
+  const navigation = useNavigation()
   const { bottom } = useSafeAreaInsets()
+  const [location, setLocation] = useState({ latitude: 0, longitude: 0 })
   const styles = useMemo(() => factory({ insets: { bottom }}), [])
-  const [data, setData] = useState([])
+  const [data, setData] = useState<Array<{ latitude: number, longitude: number }>>([])
   const { user } = useAuth()
 
   const mapView = useRef<MapView>()
 
   useEffect(() => {
-    request.post('?op=')
+    request.post('?op=rutasAsignadas', { id: user.id })
       .then(response => {
-
+        setData(response.data)
       })
   }, [])
 
   useEffect(() => {
-    Geolocation.getCurrentPosition(({ coords: { latitude, longitude }}) => {
-      setLocation({ latitude, longitude })
-      if (mapView.current !== null) {
-        mapView.current.animateCamera({
-          center: {
-            latitude,
-            longitude,
-          },
-          pitch: 0,
-          heading: 0,
-          altitude: 1000,
-          zoom: 15,
-        })
-      }
-    }, (error) => {
+    try {
+      Geolocation.getCurrentPosition(({ coords: { latitude, longitude } }) => {
+        setLocation({ latitude, longitude })
+        if (mapView.current !== null) {
+          mapView.current.animateCamera({
+            center: {
+              latitude,
+              longitude,
+            },
+            pitch: 0,
+            heading: 0,
+            altitude: 1000,
+            zoom: 15,
+          })
+        }
+      }, err => {
+        console.log(err)
+      }, {
+        distanceFilter: 0,
+        enableHighAccuracy: true,
+        forceRequestLocation: true,
+        forceLocationManager: false,
+        showLocationDialog: true
+      })
+    } catch (error) {
       console.log(error)
-    },
-    {
-      distanceFilter: 0,
-      enableHighAccuracy: true,
-      forceRequestLocation: true,
-      forceLocationManager: false,
-      showLocationDialog: true
-    })
+    }
   }, [mapView])
 
   useEffect(() => {
@@ -101,7 +87,7 @@ export const HomeScreen: React.FC = ():ReactElement => {
     }
   }, [location])
 
-  const onPressed = useCallback(() => {},[])
+  const onPressed = useCallback(() => navigation.navigate('/scanner'),[])
   const onPressedConfig = useCallback(() => {}, [])
 
   if (_.size(location) <= 0) return <View />
@@ -122,13 +108,13 @@ export const HomeScreen: React.FC = ():ReactElement => {
           return (
             <View key={JSON.stringify({ item, index})}>
               <Marker
-                coordinate={{ latitude: item.latitude, longitude: item.longitude }}
+                coordinate={{ latitude: Number(item.latitude), longitude: Number(item.longitude) }}
               />
             </View>
           )
         })}
         <Polyline
-          coordinates={[ { longitude: location.longitude, latitude: location.latitude },...data]}
+          coordinates={[ { latitude: location.latitude, longitude: location.longitude }, ..._.map(data, item => ({ latitude: Number(item.latitude), longitude: Number(item.longitude) }))]}
           strokeColor="#000"
           strokeWidth={2}
         />

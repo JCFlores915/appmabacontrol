@@ -15,6 +15,7 @@ interface State {
 }
 
 interface User {
+  id: number
   name: string
   surname: string
   first_start: number
