@@ -37,33 +37,29 @@ export const HomeScreen: React.FC = ():ReactElement => {
   }, [])
 
   useEffect(() => {
-    try {
-      Geolocation.getCurrentPosition(({ coords: { latitude, longitude } }) => {
-        setLocation({ latitude, longitude })
-        if (mapView.current !== null) {
-          mapView.current.animateCamera({
-            center: {
-              latitude,
-              longitude,
-            },
-            pitch: 0,
-            heading: 0,
-            altitude: 1000,
-            zoom: 15,
-          })
-        }
-      }, err => {
-        console.log(err)
-      }, {
-        distanceFilter: 0,
-        enableHighAccuracy: true,
-        forceRequestLocation: true,
-        forceLocationManager: false,
-        showLocationDialog: true
-      })
-    } catch (error) {
-      console.log(error)
-    }
+    Geolocation.getCurrentPosition(({ coords: { latitude, longitude } }) => {
+      setLocation({ latitude, longitude })
+      if (mapView.current !== null) {
+        mapView.current.animateCamera({
+          center: {
+            latitude,
+            longitude,
+          },
+          pitch: 0,
+          heading: 0,
+          altitude: 1000,
+          zoom: 15,
+        })
+      }
+    }, err => {
+      console.log(err)
+    }, {
+      distanceFilter: 0,
+      enableHighAccuracy: true,
+      forceRequestLocation: true,
+      forceLocationManager: false,
+      showLocationDialog: true
+    })
   }, [mapView])
 
   useEffect(() => {
@@ -89,11 +85,11 @@ export const HomeScreen: React.FC = ():ReactElement => {
 
   const onPressed = useCallback(() => navigation.navigate('/closethebox', { }),[])
   
-  const onPressedConfig = useCallback(() => {}, [])
+  const onPressedConfig = useCallback(() => navigation.navigate('/match-printer'), [])
 
   const onPressedMarker = useCallback(() => navigation.navigate('/scanner', { }), [])
 
-  if (location.latitude <= 0) return <View />
+  if (location.latitude <= 0) return <View style={{ backgroundColor:'red', flex:1}} />
 
   return (
     <View style={styles.screen}>

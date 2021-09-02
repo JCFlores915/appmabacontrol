@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 
 // Import screens
-import { CloseTheBox, HomeScreen, ScannerScreen, SignInScreen, SplashScreen, ProfileScreen } from '../modules'
+import { CloseTheBox, HomeScreen, ScannerScreen, SignInScreen, SplashScreen, ProfileScreen, MatchPrinterScreen } from '../modules'
 
 import { useAuth } from '../context/auth.context'
 
@@ -17,7 +17,7 @@ export const Navigator:React.FC<Props> = React.memo((props):ReactElement => {
   return (
     <NavigationContainer>
       {isLoggedIn ? (
-        <Stack.Navigator>
+        <Stack.Navigator initialRouteName='/home'>
           <Stack.Screen options={{ headerShown: false }} name='/home' component={HomeScreen} />
           <Stack.Screen 
             options={{
@@ -31,7 +31,7 @@ export const Navigator:React.FC<Props> = React.memo((props):ReactElement => {
           />
           <Stack.Screen 
             options={{
-              headerTitle: 'CERRAR CAJA DE LA RUTA',
+              headerTitle: 'Cerrar caja de la ruta',
               headerStyle: {
                 backgroundColor: '#EECFD4',
               }
@@ -49,10 +49,30 @@ export const Navigator:React.FC<Props> = React.memo((props):ReactElement => {
             name='/profile' 
             component={ProfileScreen} 
           />
+          <Stack.Screen 
+            options={{
+              headerTitle: '',
+              headerStyle: {
+                backgroundColor: '#EECFD4',
+              }
+            }} 
+            name='/match-printer'
+            component={MatchPrinterScreen} 
+          />
         </Stack.Navigator>
       ) : (
         <Stack.Navigator>
           <Stack.Screen options={{ headerShown: false, animationTypeForReplace: isLoggedIn ? 'pop' : 'push' }} name='/signin' component={SignInScreen} />
+          <Stack.Screen 
+            options={{
+              headerTitle: '',
+              headerStyle: {
+                backgroundColor: '#EECFD4',
+              }
+            }} 
+            name='/match-printer'
+            component={MatchPrinterScreen} 
+          />
         </Stack.Navigator>
       )}
     </NavigationContainer>

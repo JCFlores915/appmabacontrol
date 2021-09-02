@@ -2,12 +2,15 @@ import React, { ReactElement, useCallback, useMemo, useState } from 'react'
 import {
   View,
   Text,
+  Alert,
   Image,
   StyleSheet,
   TouchableOpacity,
   ToastAndroid as Toast
 } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
 import logo from '../../../assets/images/logo.png'
 
 import request from '../../../services/axios'
@@ -21,6 +24,7 @@ import { useAuth } from '../../../context/auth.context'
 
 export const SignInScreen: React.FC = ():ReactElement => {
   const { signIn } = useAuth()
+  const navigation = useNavigation()
   const { top, bottom } = useSafeAreaInsets()
   const styles = useMemo(() => factory({ insets: { top, bottom }}), [])
   const [userId, setUserId] = useState<number>(0)
@@ -38,11 +42,15 @@ export const SignInScreen: React.FC = ():ReactElement => {
     })
   }, [])
 
+  const authenticate = useCallback((user) => {
+    signIn(user)
+  }, [])
+
   const onPressed = useCallback(() => {
     if (!values.username.value.trim() || !values.password.value) return Toast.show('Todos los campos son obligatorios.', Toast.SHORT)
     setIsLoading(true)
     request.post('?op=inicioSesion', { usuario: values.username.value, clave: values.password.value })
-      .then(response => {
+      .then(async response => {
         const type = Number(response.data.success)
         switch (type) {
           case 0:
@@ -52,7 +60,18 @@ export const SignInScreen: React.FC = ():ReactElement => {
             setUserId(response.data.data.id)
             const value = Number(response.data.data.first_start)
             if (value === 0) {
-              signIn(response.data.data)
+              const data = await AsyncStorage.getItem('@storage_printer_machine')
+              if (!data) {
+                Alert.alert("Configuracion", "¿Desea agregar la impresora?", [
+                  {
+                    text: "No",
+                    onPress: () => authenticate(response.data.data),
+                  },
+                  { text: "Si", onPress: () => navigation.navigate('/match-printer', { key: 'noauth', signIn: () => authenticate(response.data.data) }) },
+                ])
+              } else {
+                authenticate(response.data.data)
+              }
             } else if (value === 1) {
               setIsVisible(true)
             }
