@@ -113,22 +113,28 @@ es la mas grande y segura en quien confiar!`)
         isVisible={isVisible}
       >
         <View style={styles.modal}>
-          <Text style={{ textAlign: 'center' }}>Recibo no cancelado.</Text>
+          <Text style={{ textAlign: 'center', fontWeight: 'bold', fontSize: 16 }}>RECIBO NO CANCELADO.</Text>
           <Resize styles={{ height: 15 }} />
-          <Text>Motivo.</Text>
+          <Text style={{ color: 'gray', left: 5, bottom: 3 }}>Motivo.</Text>
           <TextInput
             placeholder='Descripcion'
+            placeholderTextColor='#000'
             multiline
             style={{
               borderRadius: 10,
-              height: 180,
-              width: '100%'
+              height: 100,
+              width: '100%',
+              borderWidth: 1,
+              borderColor: '#ddd',
+              paddingVertical: 0,
+              paddingHorizontal: 10,
             }}
           />
-          <Resize styles={{ height: 20 }} />
+          <Resize styles={{ height: 25 }} />
           <Button
             message='Aceptar'
             onPressed={() => setIsVisible(false)}
+            styles={{ backgroundColor: '#000'}}
           />
         </View>
       </Modal>
@@ -148,13 +154,13 @@ es la mas grande y segura en quien confiar!`)
             <Text style={[styles.text, { fontSize: 18 }]}>Cedula: {data.identification_card}</Text>
             <Resize styles={{ height: 30 }} />
 
-            <View style={[]}>
+            <View style={{ flexDirection: 'row'}}>
               <Button
                 onPressed={onPressed}
                 styles={styles.button}
                 message='Detalle del cliente'
               />
-
+              <Resize styles={{ width: 20 }} />
               <Button
                 onPressed={onCancel}
                 message='No cancelado'

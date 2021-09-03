@@ -86,6 +86,7 @@ export const HomeScreen: React.FC = ():ReactElement => {
   return (
     <View style={styles.screen}>
       <MapView
+        initialRegion={{ latitude, longitude, latitudeDelta: 0.0143, longitudeDelta: 0.0134 }}
         ref={mapView}
         loadingEnabled
         // showsUserLocation

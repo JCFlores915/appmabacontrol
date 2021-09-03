@@ -14,6 +14,7 @@ import BluetoothClassic, { BluetoothDevice } from 'react-native-bluetooth-classi
 import { StateChangeEvent } from 'react-native-bluetooth-classic/lib/BluetoothEvent'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFocusEffect } from '@react-navigation/native'
+import { useNavigation } from '@react-navigation/native'
 import Icon from 'react-native-vector-icons/MaterialIcons'
 import _ from 'lodash'
 
@@ -36,6 +37,7 @@ export const MatchPrinterScreen:React.FC = ({ route }):ReactElement => {
   const [error, setError] = useState({ hasError: false, message: '' })
   const [isActive, setIsActive] = useState<boolean>()
   const { user, registerPrinter } = useAuth()
+  const navigation = useNavigation()
 
   useEffect(() => {
     BluetoothClassic.isBluetoothEnabled()
@@ -143,9 +145,11 @@ export const MatchPrinterScreen:React.FC = ({ route }):ReactElement => {
         const key = route.params?.key
         if (key && key === 'noauth') {
           route.params.signIn()
+        } else {
+          navigation.goBack()
         }
       })
-  }, [route.params, user])
+  }, [route.params, user, navigation])
 
   if (!isActive) return <View style={styles.center}>
     <Text style={{ textAlign: 'center', paddingHorizontal: 30 }}>Por favor activa el bluetooth para motrar los dispositivos vinculados.</Text>
