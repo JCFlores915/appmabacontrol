@@ -12,7 +12,7 @@ import _ from 'lodash'
 import Icon from 'react-native-vector-icons/AntDesign'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
-import Geolocation from 'react-native-geolocation-service'
+// import Geolocation from 'react-native-geolocation-service'
 
 import { Button, Resize } from '../../components/common'
 

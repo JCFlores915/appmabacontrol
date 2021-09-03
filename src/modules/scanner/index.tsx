@@ -2,6 +2,7 @@ import React, { ReactElement, useCallback, useMemo, useState, useEffect } from '
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   ActivityIndicator,
   ToastAndroid as Toast
@@ -11,15 +12,18 @@ import { BarCodeReadEvent } from 'react-native-camera'
 import { useNavigation } from '@react-navigation/native'
 import { BLEPrinter } from 'react-native-thermal-receipt-printer'
 
-import { Button, Resize } from '../../components/common'
+import { Button, Resize, Input } from '../../components/common'
+
+import Modal from 'react-native-modal'
 
 import request from '../../services/axios'
 import { useAuth } from '../../context/auth.context'
 
 export const ScannerScreen:React.FC = ({ route }):ReactElement => {
   const styles = useMemo(() => factory({ }), [])
-  const [isLoading, setIsLoading] = useState<boolean>(true)
   const { user } = useAuth()
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isVisible, setIsVisible] = useState<boolean>(false)
   const [data, setData] = useState()
   const navigation = useNavigation()
   
@@ -96,12 +100,38 @@ es la mas grande y segura en quien confiar!`)
   }, [data])
   
   const onPressed = useCallback(() => navigation.navigate('/profile', { clientId }), [clientId])
+  const onCancel = useCallback(() => {
+    setIsVisible(true)
+  }, [])
 
   if (isLoading && !data) return <View style={styles.containerCenter}>
     <ActivityIndicator color='#EECFD4' size='large' />
   </View>
   return (
     <View style={styles.screen}>
+      <Modal
+        isVisible={isVisible}
+      >
+        <View style={styles.modal}>
+          <Text style={{ textAlign: 'center' }}>Recibo no cancelado.</Text>
+          <Resize styles={{ height: 15 }} />
+          <Text>Motivo.</Text>
+          <TextInput
+            placeholder='Descripcion'
+            multiline
+            style={{
+              borderRadius: 10,
+              height: 180,
+              width: '100%'
+            }}
+          />
+          <Resize styles={{ height: 20 }} />
+          <Button
+            message='Aceptar'
+            onPressed={() => setIsVisible(false)}
+          />
+        </View>
+      </Modal>
       <QRCodeScanner
         cameraStyle={{ height: '45%', width: '100%' }}
         markerStyle={styles.marker}
@@ -120,9 +150,15 @@ es la mas grande y segura en quien confiar!`)
 
             <View style={[]}>
               <Button
-                styles={styles.button}
                 onPressed={onPressed}
+                styles={styles.button}
                 message='Detalle del cliente'
+              />
+
+              <Button
+                onPressed={onCancel}
+                message='No cancelado'
+                styles={styles.warning}
               />
             </View>
 
@@ -156,6 +192,15 @@ const factory = (conditions: any) => {
       backgroundColor: '#000',
       minWidth: 180
     },
-    text: {}
+    text: {},
+    warning: {
+      backgroundColor: '#F75900',
+      minWidth: 180
+    },
+    modal: {
+      backgroundColor: '#F3F8FD',
+      paddingHorizontal: 12,
+      paddingVertical: 20
+    }
   })
 }
