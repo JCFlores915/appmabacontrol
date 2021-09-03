@@ -5,6 +5,7 @@ import {
   Alert,
   Image,
   StyleSheet,
+  ScrollView,
   TouchableOpacity,
   ToastAndroid as Toast
 } from 'react-native'
@@ -97,59 +98,65 @@ export const SignInScreen: React.FC = ():ReactElement => {
   }, [])
 
   return (
-    <View style={styles.screen}>
-      <ResetNewPassword
-        username={userId}
-        onReset={onReset}
-        isVisible={isVisible}
-        onClose={() => setIsVisible(false)}
-      />
-      <View>
-        <Image source={logo} style={styles.logo} />
-      </View>
-
-      <Resize styles={{ height: 60 }} />
-
-      <View style={styles.form}>
-        <Input
-          label='Usuario'
-          customProps={{
-            onChangeText: (value: string) => onChange(value, 'username'),
-            value: values.username.value
-          }}
-          icon={{ name: 'account' }}
-          containerStyle={{ marginBottom: 18 }}
-        />
-
-        <Input
-          label='Contraseña'
-          icon={{ name: 'lock' }}
-          customProps={{
-            secureTextEntry: true,
-            onChangeText: (value: string) => onChange(value, 'password'),
-            value: values.password.value
-          }}
-        />
-        <Resize styles={{ height: 45 }} />
-        <View>
-          <Button
-            isLoading={isLoading}
-            onPressed={onPressed}
-            message='Ingresar'
+    <ScrollView
+      keyboardShouldPersistTaps='always'
+      showsVerticalScrollIndicator={false} 
+      contentContainerStyle={{ flexGrow: 1 }}
+    >
+      <View style={styles.screen}>
+        <ResetNewPassword
+          username={userId}
+          onReset={onReset}
+          isVisible={isVisible}
+          onClose={() => setIsVisible(false)}
           />
+        <View>
+          <Image source={logo} style={styles.logo} />
         </View>
-        <Resize styles={{ height: 30 }} />
-        <View style={styles.content}>
-          <TouchableOpacity onPress={() => {}}>
-            <Text style={styles.text}>Ingresar con pin</Text>
-          </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => {}}>
-            <Text style={styles.text}>¿Olvidaste contraseña?</Text>
-          </TouchableOpacity>
+        <Resize styles={{ height: 60 }} />
+
+        <View style={styles.form}>
+          <Input
+            label='Usuario'
+            customProps={{
+              onChangeText: (value: string) => onChange(value, 'username'),
+              value: values.username.value
+            }}
+            icon={{ name: 'account' }}
+            containerStyle={{ marginBottom: 18 }}
+            />
+
+          <Input
+            label='Contraseña'
+            icon={{ name: 'lock' }}
+            customProps={{
+              secureTextEntry: true,
+              onChangeText: (value: string) => onChange(value, 'password'),
+              value: values.password.value
+            }}
+            />
+          <Resize styles={{ height: 45 }} />
+          <View>
+            <Button
+              isLoading={isLoading}
+              onPressed={onPressed}
+              message='Ingresar'
+              />
+          </View>
+          <Resize styles={{ height: 30 }} />
+          <View style={styles.content}>
+            <TouchableOpacity onPress={() => {}}>
+              <Text style={styles.text}>Ingresar con pin</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => {}}>
+              <Text style={styles.text}>¿Olvidaste contraseña?</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
+    </ScrollView>
   )
 }
 

@@ -82,7 +82,8 @@ const ResetNewPassword:React.FC<Props> = (props):ReactElement => {
             label='Contraseña actual'
             customProps={{
               onChangeText: (value: string) => onChange(value, 'password'),
-              value: values.password.value
+              value: values.password.value,
+              secureTextEntry: true
             }}
             icon={{ name: 'lock' }}
             containerStyle={{ marginBottom: 22 }}            
@@ -92,7 +93,8 @@ const ResetNewPassword:React.FC<Props> = (props):ReactElement => {
             label='Nueva contraseña'
             customProps={{
               onChangeText: (value: string) => onChange(value, 'newPassword'),
-              value: values.newPassword.value
+              value: values.newPassword.value,
+              secureTextEntry: true
             }}
             icon={{ name: 'lock' }}
             containerStyle={{ marginBottom: 22 }}            
@@ -102,7 +104,8 @@ const ResetNewPassword:React.FC<Props> = (props):ReactElement => {
             label='Confirmar contraseña'
             customProps={{
               onChangeText: (value: string) => onChange(value, 'confirmNewPassword'),
-              value: values.confirmNewPassword.value
+              value: values.confirmNewPassword.value,
+              secureTextEntry: true
             }}
             icon={{ name: 'lock' }}           
           />

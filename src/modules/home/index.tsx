@@ -2,17 +2,19 @@ import React, { ReactElement, useMemo, useState, useEffect, useRef, useCallback 
 import {
   View,
   Text,
+  Alert,
   StyleSheet,
-  TouchableOpacity
+  TouchableOpacity,
+  ActivityIndicator
 } from 'react-native'
 import MapView, { Marker, Polyline } from 'react-native-maps'
 import _ from 'lodash'
 import Icon from 'react-native-vector-icons/AntDesign'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useNavigation } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import Geolocation from 'react-native-geolocation-service'
 
-import { Button } from '../../components/common'
+import { Button, Resize } from '../../components/common'
 
 import { useAuth } from '../../context/auth.context'
 
@@ -56,11 +58,35 @@ export const HomeScreen: React.FC = ():ReactElement => {
     }, {
       distanceFilter: 0,
       enableHighAccuracy: true,
-      forceRequestLocation: true,
-      forceLocationManager: false,
       showLocationDialog: true
     })
-  }, [mapView])
+  }, [])
+
+  // useFocusEffect(useCallback(() => {
+  //   Geolocation.getCurrentPosition(({ coords: { latitude, longitude } }) => {
+  //     setLocation({ latitude, longitude })
+  //     if (mapView.current !== null) {
+  //       mapView.current.animateCamera({
+  //         center: {
+  //           latitude,
+  //           longitude,
+  //         },
+  //         pitch: 0,
+  //         heading: 0,
+  //         altitude: 1000,
+  //         zoom: 15,
+  //       })
+  //     }
+  //   }, err => {
+  //     console.log(err)
+  //   }, {
+  //     distanceFilter: 0,
+  //     enableHighAccuracy: true,
+  //     forceRequestLocation: true,
+  //     forceLocationManager: false,
+  //     showLocationDialog: true
+  //   })
+  // }, [mapView]))
 
   useEffect(() => {
     if (location.latitude > 0) {
@@ -72,8 +98,6 @@ export const HomeScreen: React.FC = ():ReactElement => {
       {
         distanceFilter: 0,
         enableHighAccuracy: true,
-        forceRequestLocation: true,
-        forceLocationManager: false,
         showLocationDialog: true
       })
     }
@@ -82,14 +106,29 @@ export const HomeScreen: React.FC = ():ReactElement => {
       Geolocation.clearWatch(watchId)
     }
   }, [location])
+  console.log(location)
 
   const onPressed = useCallback(() => navigation.navigate('/closethebox', { }),[])
   
   const onPressedConfig = useCallback(() => navigation.navigate('/match-printer'), [])
+  // const onPressedConfig = useCallback(() => navigation.navigate('/scanner', { clientId: 17 }), [])
 
-  const onPressedMarker = useCallback(() => navigation.navigate('/scanner', { }), [])
+  const onPressedMarker = useCallback((clientId: number) => {
+    if (!user.printer?.address) {
+      return Alert.alert('Advertencia', 'No tienes vinculada la impresora, antes de continuar por favor vincula la impresora.', [
+        { text: 'OK', onPress: () => {
+          navigation.navigate('/match-printer')
+        }}
+      ])
+    }
+    navigation.navigate('/scanner', { clientId })
+  }, [user])
 
-  if (location.latitude <= 0) return <View style={{ backgroundColor:'red', flex:1}} />
+  if (location.latitude <= 0) return <View style={styles.center}>
+    <ActivityIndicator color='#EECFD4' size='large' />
+    <Resize styles={{ height: 20 }} />
+    <Text>Obteniendo ubicacion, por favor espere.</Text>
+  </View>
 
   return (
     <View style={styles.screen}>
@@ -99,15 +138,16 @@ export const HomeScreen: React.FC = ():ReactElement => {
         showsUserLocation
         followsUserLocation
         style={styles.screen}
-        loadingBackgroundColor='#fff'
         loadingIndicatorColor='#EECFD4'
+        loadingBackgroundColor='#F3F8FD'
+        customMapStyle={require('../../../style.json')}
       >
         
         {_.map(data, (item, index) => {
           return (
             <View key={JSON.stringify({ item, index})}>
               <Marker
-                onPress={onPressedMarker}
+                onPress={() => onPressedMarker(item.idclient)}
                 coordinate={{ latitude: Number(item.latitude), longitude: Number(item.longitude) }}
               />
             </View>
@@ -154,6 +194,12 @@ const factory = (conditions: any) => {
     },
     button: {
       backgroundColor: '#000',
+    },
+    center: {
+      flex: 1,
+      backgroundColor:'#F3F8FD',
+      justifyContent: 'center',
+      alignItems: 'center'
     }
   })
 }
