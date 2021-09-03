@@ -34,8 +34,18 @@ export const MatchPrinterScreen:React.FC = ({ route }):ReactElement => {
   const [devices, setDevices] = useState<Array<Device>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState({ hasError: false, message: '' })
-  const [isActive, setIsActive] = useState<boolean>(false)
+  const [isActive, setIsActive] = useState<boolean>()
   const { user, registerPrinter } = useAuth()
+
+  useEffect(() => {
+    BluetoothClassic.isBluetoothEnabled()
+      .then(res => {
+        setIsActive(res)
+      })
+      .catch(err => {
+        setIsActive(false)
+      })
+  }, [])
 
   useEffect(() => {
     requestAccessFineLocationPermission()
@@ -128,10 +138,10 @@ export const MatchPrinterScreen:React.FC = ({ route }):ReactElement => {
     }
     AsyncStorage.setItem('@storage_printer_machine', JSON.stringify(device))
       .then(() => {
-        const { key } = route.params
         registerPrinter(device)
         Toast.show('Impresora registrada correctamente.', Toast.SHORT)
-        if (key === 'noauth') {
+        const key = route.params?.key
+        if (key && key === 'noauth') {
           route.params.signIn()
         }
       })
@@ -166,7 +176,7 @@ export const MatchPrinterScreen:React.FC = ({ route }):ReactElement => {
             data={devices}
             renderItem={renderItem}
             keyExtractor={(item, index) => JSON.stringify(item) + index}
-            ListEmptyComponent={<View><Text>No hay dispositivos vinculados. Por favor proceda a vincular la impresora.</Text></View>}
+            ListEmptyComponent={<View><Text>No hay dispositivos vinculados. Por favor proceda a vincular la impresora manualmente en su dispositivo.</Text></View>}
             ItemSeparatorComponent={() => <View style={styles.divider} />}
          /> 
         )}

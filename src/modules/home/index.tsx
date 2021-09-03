@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator
 } from 'react-native'
-import MapView, { Marker, Polyline } from 'react-native-maps'
+import MapView, { Marker, Polyline, Circle } from 'react-native-maps'
 import _ from 'lodash'
 import Icon from 'react-native-vector-icons/AntDesign'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -20,102 +20,55 @@ import { useAuth } from '../../context/auth.context'
 
 import request from '../../services/axios'
 
+const latitude = 11.930716577776334, longitude =-85.95514852399023
 export const HomeScreen: React.FC = ():ReactElement => {
-  let watchId = 0
   const navigation = useNavigation()
   const { bottom } = useSafeAreaInsets()
-  const [location, setLocation] = useState({ latitude: 0, longitude: 0 })
+  const [location, setLocation] = useState({ latitude, longitude })
   const styles = useMemo(() => factory({ insets: { bottom }}), [])
-  const [data, setData] = useState<Array<{ latitude: number, longitude: number }>>([])
+  const [data, setData] = useState<Array<{ latitude: number, longitude: number, idclient: number, cancel: number }>>([])
   const { user } = useAuth()
 
   const mapView = useRef<MapView>()
 
-  useEffect(() => {
+  useFocusEffect(() => {
     request.post('?op=rutasAsignadas', { id: user.id })
       .then(response => {
         setData(response.data)
       })
-  }, [])
+  })
 
   useEffect(() => {
-    Geolocation.getCurrentPosition(({ coords: { latitude, longitude } }) => {
-      setLocation({ latitude, longitude })
-      if (mapView.current !== null) {
-        mapView.current.animateCamera({
-          center: {
-            latitude,
-            longitude,
-          },
-          pitch: 0,
-          heading: 0,
-          altitude: 1000,
-          zoom: 15,
-        })
-      }
-    }, err => {
-      console.log(err)
-    }, {
-      distanceFilter: 0,
-      enableHighAccuracy: true,
-      showLocationDialog: true
-    })
-  }, [])
-
-  // useFocusEffect(useCallback(() => {
-  //   Geolocation.getCurrentPosition(({ coords: { latitude, longitude } }) => {
-  //     setLocation({ latitude, longitude })
-  //     if (mapView.current !== null) {
-  //       mapView.current.animateCamera({
-  //         center: {
-  //           latitude,
-  //           longitude,
-  //         },
-  //         pitch: 0,
-  //         heading: 0,
-  //         altitude: 1000,
-  //         zoom: 15,
-  //       })
-  //     }
-  //   }, err => {
-  //     console.log(err)
-  //   }, {
-  //     distanceFilter: 0,
-  //     enableHighAccuracy: true,
-  //     forceRequestLocation: true,
-  //     forceLocationManager: false,
-  //     showLocationDialog: true
-  //   })
-  // }, [mapView]))
-
-  useEffect(() => {
-    if (location.latitude > 0) {
-      watchId = Geolocation.watchPosition(({ coords: { latitude, longitude }}) => {
-        setLocation({ latitude, longitude })
-      }, (error) => {
-        console.log(error)
-      },
-      {
-        distanceFilter: 0,
-        enableHighAccuracy: true,
-        showLocationDialog: true
+    if (mapView.current !== undefined) {
+      mapView.current.animateCamera({
+        center: {
+          latitude,
+          longitude,
+        },
+        pitch: 0,
+        heading: 0,
+        altitude: 1000,
+        zoom: 15,
       })
     }
-
-    return () => {
-      Geolocation.clearWatch(watchId)
-    }
-  }, [location])
-  console.log(location)
+    // Geolocation.getCurrentPosition(({ coords: { latitude, longitude } }) => {
+    //   console.log('geolocation  => ', latitude, longitude)
+    // }, err => {
+    //   console.log(err)
+    // }, {
+    //   distanceFilter: 0,
+    //   enableHighAccuracy: true,
+    //   showLocationDialog: true
+    // })
+  }, [mapView])
 
   const onPressed = useCallback(() => navigation.navigate('/closethebox', { }),[])
   
   const onPressedConfig = useCallback(() => navigation.navigate('/match-printer'), [])
-  // const onPressedConfig = useCallback(() => navigation.navigate('/scanner', { clientId: 17 }), [])
 
   const onPressedMarker = useCallback((clientId: number) => {
     if (!user.printer?.address) {
-      return Alert.alert('Advertencia', 'No tienes vinculada la impresora, antes de continuar por favor vincula la impresora.', [
+      return Alert.alert('Advertencia', 'No tienes vinculada una impresora, antes de continuar por favor vincula la impresora.', [
         { text: 'OK', onPress: () => {
           navigation.navigate('/match-printer')
         }}
@@ -124,19 +77,19 @@ export const HomeScreen: React.FC = ():ReactElement => {
     navigation.navigate('/scanner', { clientId })
   }, [user])
 
-  if (location.latitude <= 0) return <View style={styles.center}>
-    <ActivityIndicator color='#EECFD4' size='large' />
-    <Resize styles={{ height: 20 }} />
-    <Text>Obteniendo ubicacion, por favor espere.</Text>
-  </View>
+  // if (location.latitude <= 0) return <View style={styles.center}>
+  //   <ActivityIndicator color='#EECFD4' size='large' />
+  //   <Resize styles={{ height: 20 }} />
+  //   <Text>Obteniendo ubicacion, por favor espere.</Text>
+  // </View>
 
   return (
     <View style={styles.screen}>
       <MapView
         ref={mapView}
         loadingEnabled
-        showsUserLocation
-        followsUserLocation
+        // showsUserLocation
+        // followsUserLocation
         style={styles.screen}
         loadingIndicatorColor='#EECFD4'
         loadingBackgroundColor='#F3F8FD'
@@ -147,8 +100,9 @@ export const HomeScreen: React.FC = ():ReactElement => {
           return (
             <View key={JSON.stringify({ item, index})}>
               <Marker
-                onPress={() => onPressedMarker(item.idclient)}
+                pinColor={(Number(item.cancel) || 0) === 0 ? 'red' : 'blue'}
                 coordinate={{ latitude: Number(item.latitude), longitude: Number(item.longitude) }}
+                onPress={() => (Number(item.cancel) || 0) === 0 ? onPressedMarker(item.idclient) : {}}
               />
             </View>
           )
@@ -158,10 +112,17 @@ export const HomeScreen: React.FC = ():ReactElement => {
           strokeColor="#000"
           strokeWidth={2}
         />
+        <Circle
+          radius={30}
+          fillColor='#000'
+          strokeColor='#000'
+          strokeWidth={3}
+          center={{ latitude: location.latitude, longitude: location.longitude }}
+        />
       </MapView>
       <View style={styles.container}>
         <Button
-          message='CERRAR CAJA DE LA RUTA'
+          message='Cerrar caja de la ruta'
           onPressed={onPressed}
           styles={styles.button}
         />

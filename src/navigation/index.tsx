@@ -63,13 +63,13 @@ export const Navigator:React.FC<Props> = React.memo((props):ReactElement => {
       ) : (
         <Stack.Navigator>
           <Stack.Screen options={{ headerShown: false, animationTypeForReplace: isLoggedIn ? 'pop' : 'push' }} name='/signin' component={SignInScreen} />
-          <Stack.Screen 
+          <Stack.Screen
             options={{
               headerTitle: '',
               headerStyle: {
                 backgroundColor: '#EECFD4',
               }
-            }} 
+            }}
             name='/match-printer'
             component={MatchPrinterScreen} 
           />

@@ -24,12 +24,10 @@ export const ScannerScreen:React.FC = ({ route }):ReactElement => {
   const navigation = useNavigation()
   
   const clientId = route.params.clientId
-console.log(data)
   useEffect(() => {
     request.post('?op=detallesCliente', { idcliente: clientId })
       .then(res => {
         setData(res.data)
-        console.log(res.data)
       })
       .finally(() => {
         setIsLoading(false)
@@ -38,7 +36,7 @@ console.log(data)
   }, [clientId])
 
   const printer = useCallback((info) => {
-    request.post('', {})
+    request.post('?op=reciboCuota', { idfactura: info.data_fee.idenvoice, idcuentaporcobrar: info.data_fee.idreceivable, iddetallecuota: info.data_fee.iddetail })
       .then(res => {
         BLEPrinter.init();
         BLEPrinter.connectPrinter(user.printer?.address)
@@ -46,22 +44,19 @@ console.log(data)
             const date = new Date()
             BLEPrinter.printBill(`
 <C><B>Recibo de Pago</B></C>
-<C>Cliente: Juan Perez</C>
+<C>Cliente: ${res.data.client || info.name}</C>
 <C>Fecha Actual: ${date.getDay()}-${date.getMonth()}-${date.getFullYear()}</C>
-<C>Correspondiente al mes: mayo de 2021</C>
-<C>Cobrador: Enrique Perez</C>
+<C>Correspondiente al mes: ${res.data.date_fee}</C>
+<C>Cobrador: ${res.data.employee}</C>
 
-
-<L>C$2,000</L>
-<L>SALDO ANTERIOR</L>
-<C>C$300</C>
-<C>ESTE</C>
-<R>C$1,700</R>
-<R>SALDO NUEVO</R>
+<L>SALDO ANTERIOR: C$${Number(res.data.previous_balance).toFixed(4)}</L>
+<C>ESTE: C$${Number(res.data.this).toFixed(4)}</C>
+<R>SALDO NUEVO: C$${Number(res.data.new_balance).toFixed(4)}</R>
 
 Y Recuerde
 <M>FUNERARIA BARRANTES</M>
 es la mas grande y segura en quien confiar!`)
+            navigation.goBack()
           })
           .catch(err => {
             Toast.show('Error al conectarse con la impresora.', Toast.SHORT)
@@ -73,7 +68,7 @@ es la mas grande y segura en quien confiar!`)
       .finally(() => {
 
       })
-  }, [user])
+  }, [user, navigation])
 
   const onRead = useCallback((e: BarCodeReadEvent) => {
     if (e.data !== null) {
