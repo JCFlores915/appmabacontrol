@@ -1,6 +1,7 @@
 import React, { ReactElement } from 'react'
 import { useEffect } from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { ErrorBoundary } from './src/components/error-boundary.component'
 
 import { Provider } from './src/context/auth.context'
 
@@ -14,7 +15,9 @@ const Main:React.FC = ():ReactElement => {
 
   return (
     <SafeAreaProvider>
-      <Provider />
+      <ErrorBoundary>
+        <Provider />
+      </ErrorBoundary>
     </SafeAreaProvider>
   )
 }

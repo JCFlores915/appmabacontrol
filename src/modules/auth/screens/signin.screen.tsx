@@ -61,18 +61,19 @@ export const SignInScreen: React.FC = ():ReactElement => {
             setUserId(response.data.data.id)
             const value = Number(response.data.data.first_start)
             if (value === 0) {
-              const data = await AsyncStorage.getItem('@storage_printer_machine')
-              if (!data) {
-                Alert.alert("Configuracion", "¿Desea agregar la impresora?", [
-                  {
-                    text: "No",
-                    onPress: () => authenticate(response.data.data),
-                  },
-                  { text: "Si", onPress: () => navigation.navigate('/match-printer', { key: 'noauth', signIn: () => authenticate(response.data.data) }) },
-                ])
-              } else {
-                authenticate(response.data.data)
-              }
+              // const data = await AsyncStorage.getItem('@storage_printer_machine')
+              authenticate(response.data.data)
+              // if (!data) {
+              //   Alert.alert("Configuracion", "¿Desea agregar la impresora?", [
+              //     {
+              //       text: "No",
+              //       onPress: () => authenticate(response.data.data),
+              //     },
+              //     { text: "Si", onPress: () => navigation.navigate('/match-printer', { key: 'noauth', signIn: () => authenticate(response.data.data) }) },
+              //   ])
+              // } else {
+              //   authenticate(response.data.data)
+              // }
             } else if (value === 1) {
               setIsVisible(true)
             }
@@ -109,7 +110,7 @@ export const SignInScreen: React.FC = ():ReactElement => {
           onReset={onReset}
           isVisible={isVisible}
           onClose={() => setIsVisible(false)}
-          />
+        />
         <View>
           <Image source={logo} style={styles.logo} />
         </View>
