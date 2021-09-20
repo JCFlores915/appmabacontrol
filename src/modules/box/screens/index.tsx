@@ -4,9 +4,11 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  ActivityIndicator
+  ActivityIndicator,
+  ToastAndroid as Toast
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
 
 import { Button, Resize } from '../../../components/common'
 import DetailsModal from '../components/details.component'
@@ -17,20 +19,23 @@ import { useAuth } from '../../../context/auth.context'
 
 export const CloseTheBox:React.FC = ():ReactElement => {
   const { bottom } = useSafeAreaInsets()
+  const navigation = useNavigation()
   const { user } = useAuth()
 
   const styles = useMemo(() => factory({ insets: { bottom } }), [])
 
   const [isVisible, setIsVisible] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [data, setData] = useState()
 
   useEffect(() => {
-    request.post('')
+    request.post('?op=detalleCierreCaja', { idempleado: user.id })
       .then(({ data }) => {
-
+        setData(data)
       })
       .catch(err => {
-
+        navigation.goBack()
+        Toast.show('Ocurrio un error al obtener el detalle de cierre de caja.', Toast.LONG)
       })
       .finally(() => {
         setIsLoading(false)
@@ -43,27 +48,29 @@ export const CloseTheBox:React.FC = ():ReactElement => {
 
   const renderItem = useCallback(({ item }): ReactElement => {
     return (
-      <View>
+      <View style={{ paddingHorizontal: 10 }}>
         <View style={styles.row}>
-          <View
-            style={[styles.circle, { backgroundColor: item.color_status }]}
-          />
-
-          <View>
-            <Text>{item}</Text>
-            <View style={styles.row}>
-              <Text style={styles.text}>{user.first_start}</Text>
-              <Text style={styles.quote}>{item}</Text>
+          <View style={{ flexDirection: 'row' , alignItems: 'center' }}>
+            <View
+              style={[styles.circle, { backgroundColor: item.estado_color }]}
+            />
+            <View style={{ marginLeft: 15 }}>
+              <Text>{item.cedula}</Text>
+              <View style={styles.row}>
+                <Text style={styles.text}>{item.nombre}</Text>
+                <Text style={[styles.quote, { marginLeft: 10 }]}>No. {item.cuotas}</Text>
+              </View>
             </View>
           </View>
 
-          <Text style={styles.text}>C${Number(item).toFixed(4)}</Text>
+
+          <Text style={styles.text}>C${Number(item.saldofinal).toFixed(4)}</Text>
         </View>
       </View>
     )
   }, [])
 
-  if (isLoading) return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+  if (isLoading && !data) return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
     <ActivityIndicator color='#EECFD4' size='large' />
   </View>
 
@@ -74,13 +81,13 @@ export const CloseTheBox:React.FC = ():ReactElement => {
         onToggle={onToggle}
       />
       <FlatList
-        data={[]}
+        data={[...data.detalle_cuota]}
         renderItem={renderItem}
         keyExtractor={(item, index) => JSON.stringify({ item, index})}
         ListHeaderComponent={<View style={[styles.row, styles.wrapper]}>
-          <Text style={[styles.bold, styles.size]}>Facturados: 3</Text>
-          <Text style={[styles.bold, styles.size]}>No facturados: 2</Text>
-          <Text style={[styles.bold, styles.size]}>Pendientes: 4</Text>
+          <Text style={[styles.bold, styles.size]}>Facturados: {String(data?.conteo[0]?.facturado)}</Text>
+          <Text style={[styles.bold, styles.size]}>No facturados: {String(data?.conteo[1]?.no_pagado)}</Text>
+          <Text style={[styles.bold, styles.size]}>Pendientes: {String(data?.conteo[2]?.pendientes)}</Text>
         </View>}
         ListEmptyComponent={
           <View style={{ height: 1, backgroundColor: 'gray' }}>
@@ -98,7 +105,7 @@ export const CloseTheBox:React.FC = ():ReactElement => {
 
         <View style={styles.row}>
           <Text style={[styles.bold, styles.separator]}>Total:</Text>
-          <Text>C$300.00</Text>
+          <Text>C${Number(data?.total.total_final).toFixed(4)}</Text>
         </View>
       </View>
     </View>
@@ -113,7 +120,7 @@ const factory = (conditions: any) => {
       backgroundColor: '#F3F8FD',
     },
     wrapper: {
-      paddingHorizontal: 20,
+      paddingHorizontal: 10,
       paddingVertical: 18
     },
     content: {
@@ -122,7 +129,7 @@ const factory = (conditions: any) => {
       alignItems: 'center',
       marginBottom: bottom,
       paddingVertical: 20,
-      paddingHorizontal: 20,
+      paddingHorizontal: 10,
       backgroundColor: '#EECFD4'
     },
     row: {
@@ -151,6 +158,7 @@ const factory = (conditions: any) => {
     },
     text: {
       color: 'gray',
+      flexWrap: 'wrap'
     },
     quote: {
       fontWeight: 'bold'

@@ -1,22 +1,84 @@
-import React, { ReactElement, useCallback, useMemo } from 'react'
+import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { TouchableOpacity } from 'react-native'
 import {
   View,
   Text,
-  StyleSheet
+  StyleSheet,
+  ToastAndroid as Toast
 } from 'react-native'
 import Modal from 'react-native-modal'
 import Icon from 'react-native-vector-icons/MaterialIcons'
 
-import { Button, Resize } from '../../../components/common'
+import { Button, Resize, Input } from '../../../components/common'
+import { useAuth } from '../../../context/auth.context'
+
+import request from '../../../services/axios'
 
 type Props = {
   isVisible: boolean
   onToggle: () => void
 }
 const DetailsModal:React.FC<Props> = (props):ReactElement => {
+  let timeoutId: NodeJS.Timeout
+  const { user, signOut } = useAuth()
   const styles = useMemo(() => factory({ }), [])
-  const onPressed = useCallback(() => {}, [])
+  const [values, setValues] = useState({ cordoba: '', dolar: '0', total: '' })
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (values.cordoba && values.dolar) {
+      setValues(prevState => {
+        const calc = Number(prevState.dolar) * 35.75
+        return {
+          ...prevState,
+          total: String(calc)
+        }
+      })
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
+  }, [values.cordoba])
+
+  const onPressed = useCallback(() => {
+    if (!values.cordoba) return Toast.show('Ingrese el total en cordoba.', Toast.SHORT)
+
+    setIsLoading(true)
+    request.post('?op=cierreCaja', {
+      idempleado: user.id,
+      idoperaciones: user.idapartura,
+      montocierrecordoba: values.cordoba,
+      montocierredolar: values.dolar,
+      montoconversion: values.total,
+      totalcierre: Number(values.cordoba) + Number(values.total)
+    })
+      .then(({ data }) => {
+        if (data.success === 1) {
+          props.onToggle()
+          Toast.show('Cierre de caja registrado correctamente.', Toast.SHORT)
+          timeoutId = setTimeout(() => {
+            signOut()
+            Toast.show('Su ruta de cobro a finalizado.', Toast.SHORT)
+          }, 2000)
+          return
+        }
+        Toast.show('Ocurrio un error al cerrar la caja, por favor intente de nuevo o mas tarde.', Toast.SHORT)
+      })
+      .catch(() => {
+        Toast.show('Ocurrio un error, por favor intente de nuevo o mas tarde.', Toast.SHORT)
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
+  }, [values, user, props])
+
+  const onChange = useCallback((value: string, key: string) => {
+    if (value === '-') return
+    setValues(prevState => ({ ...prevState, [key]: value }))
+  }, [])
 
   return (
     <Modal
@@ -37,24 +99,43 @@ const DetailsModal:React.FC<Props> = (props):ReactElement => {
         </TouchableOpacity>
         <Resize styles={{ height: 10 }} />
         <View>
-          <View style={styles.center}>
-            <View style={[styles.row, styles.background]}>
-              <Text style={styles.symbol}>C$</Text>
+          <Input
+            label='Total cordoba'
+            customProps={{
+              onChangeText: (value: string) => onChange(value, 'cordoba'),
+              keyboardType: 'numeric',
+              value: values.cordoba
+            }}
+            icon={{ name: 'account' }}
+            containerStyle={{ marginBottom: 18 }}
+          />
 
-              <Resize styles={{ height: 20 }} />
-              <Text style={styles.total}>300.00</Text>
-            </View>
-          </View>
-          <Resize styles={{ height: 20 }} />
-          <Text style={[styles.text, styles.textCenter]}>Fecha del cierre: 20/10/2020</Text>
-          <Resize styles={{ height: 20 }} />
-          <View style={styles.divider} />
-          <Resize styles={{ height: 20 }} />
+          <Input
+            label='Total dolar'
+            customProps={{
+              onChangeText: (value: string) => onChange(value, 'dolar'),
+              value: values.dolar,
+              keyboardType: 'numeric',
+            }}
+            icon={{ name: 'account' }}
+            containerStyle={{ marginBottom: 18 }}
+          />
 
-          <Text style={[styles.text, styles.textCenter]}>Direccion de usuario</Text>
+          <Input
+            label='Total conversion'
+            customProps={{
+              onChangeText: (value: string) => onChange(value, 'total'),
+              keyboardType: 'numeric',
+              value: values.total,
+              editable: false
+            }}
+            icon={{ name: 'account' }}
+            containerStyle={{ marginBottom: 18 }}
+          />
 
           <Resize styles={{ height: 40 }} />
           <Button 
+            isLoading={isLoading}
             onPressed={onPressed}
             message='CONFIRMAR'
           />
