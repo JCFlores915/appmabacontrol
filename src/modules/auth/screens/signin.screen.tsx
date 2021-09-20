@@ -19,6 +19,7 @@ import request from '../../../services/axios'
 // Import components
 import { Input, Button, Resize } from '../../../components/common'
 import ResetNewPassword from '../components/reset-new-password.component'
+import OpenBox from '../components/open-box.component'
 
 // Import custom hooks
 import { useAuth } from '../../../context/auth.context'
@@ -35,6 +36,7 @@ export const SignInScreen: React.FC = ():ReactElement => {
     password: { isValid: true, value: '' } 
   })
   const [isVisible, setIsVisible] = useState<boolean>(false)
+  const [isVisibleBox, setIsVisibleBox] = useState<boolean>(false)
 
   const onReset = useCallback(() => {
     setValues({
@@ -61,8 +63,14 @@ export const SignInScreen: React.FC = ():ReactElement => {
             setUserId(response.data.data.id)
             const value = Number(response.data.data.first_start)
             if (value === 0) {
+              const id = Number(response.data.data.idapartura)
+              if (id === 0) {
+                return setIsVisibleBox(true)
+              } else {
+                authenticate(response.data.data)
+              }
+              
               // const data = await AsyncStorage.getItem('@storage_printer_machine')
-              authenticate(response.data.data)
               // if (!data) {
               //   Alert.alert("Configuracion", "¿Desea agregar la impresora?", [
               //     {
@@ -111,6 +119,14 @@ export const SignInScreen: React.FC = ():ReactElement => {
           isVisible={isVisible}
           onClose={() => setIsVisible(false)}
         />
+
+        <OpenBox 
+          userId={userId}
+          onReset={onReset}
+          isVisible={isVisibleBox}
+          onClose={() => setIsVisibleBox(false)}
+        />
+
         <View>
           <Image source={logo} style={styles.logo} />
         </View>

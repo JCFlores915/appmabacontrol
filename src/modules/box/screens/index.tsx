@@ -1,9 +1,10 @@
-import React, { ReactElement, useCallback, useMemo, useState } from 'react'
+import React, { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 import {
   View,
   Text,
   FlatList,
-  StyleSheet
+  StyleSheet,
+  ActivityIndicator
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -12,10 +13,29 @@ import DetailsModal from '../components/details.component'
 
 import request from '../../../services/axios'
 
+import { useAuth } from '../../../context/auth.context'
+
 export const CloseTheBox:React.FC = ():ReactElement => {
   const { bottom } = useSafeAreaInsets()
+  const { user } = useAuth()
+
   const styles = useMemo(() => factory({ insets: { bottom } }), [])
+
   const [isVisible, setIsVisible] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+
+  useEffect(() => {
+    request.post('')
+      .then(({ data }) => {
+
+      })
+      .catch(err => {
+
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
+  }, [])
 
   // const onCloseTheBox = useCallback(() => {}, [])
 
@@ -24,10 +44,28 @@ export const CloseTheBox:React.FC = ():ReactElement => {
   const renderItem = useCallback(({ item }): ReactElement => {
     return (
       <View>
+        <View style={styles.row}>
+          <View
+            style={[styles.circle, { backgroundColor: item.color_status }]}
+          />
 
+          <View>
+            <Text>{item}</Text>
+            <View style={styles.row}>
+              <Text style={styles.text}>{user.first_start}</Text>
+              <Text style={styles.quote}>{item}</Text>
+            </View>
+          </View>
+
+          <Text style={styles.text}>C${Number(item).toFixed(4)}</Text>
+        </View>
       </View>
     )
   }, [])
+
+  if (isLoading) return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <ActivityIndicator color='#EECFD4' size='large' />
+  </View>
 
   return (
     <View style={styles.screen}>
@@ -44,6 +82,11 @@ export const CloseTheBox:React.FC = ():ReactElement => {
           <Text style={[styles.bold, styles.size]}>No facturados: 2</Text>
           <Text style={[styles.bold, styles.size]}>Pendientes: 4</Text>
         </View>}
+        ListEmptyComponent={
+          <View style={{ height: 1, backgroundColor: 'gray' }}>
+
+          </View>
+        }
       />
 
       <View style={styles.content}>
@@ -100,6 +143,17 @@ const factory = (conditions: any) => {
     },
     size: {
       fontSize: 14
+    },
+    circle: {
+      width: 40,
+      height: 40,
+      borderRadius: 200
+    },
+    text: {
+      color: 'gray',
+    },
+    quote: {
+      fontWeight: 'bold'
     }
   })
 }

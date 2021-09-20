@@ -26,6 +26,7 @@ interface User {
   name: string
   surname: string
   first_start: number
+  idapartura: number
   printer?: Printer
 }
 interface Context {

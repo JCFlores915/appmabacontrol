@@ -20,13 +20,16 @@ import request from '../../services/axios'
 import { useAuth } from '../../context/auth.context'
 
 export const ScannerScreen:React.FC = ({ route }):ReactElement => {
-  const styles = useMemo(() => factory({ }), [])
+  const navigation = useNavigation()
   const { user } = useAuth()
+
   const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isFetching, setIsFetching] = useState<boolean>(false)
   const [isVisible, setIsVisible] = useState<boolean>(false)
   const [data, setData] = useState()
-  const navigation = useNavigation()
+  const [description, setDescription] = useState('')
   
+  const styles = useMemo(() => factory({ }), [])
   const clientId = route.params.clientId
   useEffect(() => {
     request.post('?op=detallesCliente', { idcliente: clientId })
@@ -48,14 +51,15 @@ export const ScannerScreen:React.FC = ({ route }):ReactElement => {
             const date = new Date()
             BLEPrinter.printBill(`
 <C><B>Recibo de Pago</B></C>
+
 <C>Cliente: ${res.data.client || info.name}</C>
 <C>Fecha Actual: ${date.getDay()}-${date.getMonth()}-${date.getFullYear()}</C>
 <C>Correspondiente al mes: ${res.data.date_fee}</C>
 <C>Cobrador: ${res.data.employee}</C>
 
 <L>SALDO ANTERIOR: C$${Number(res.data.previous_balance).toFixed(4)}</L>
-<C>ESTE: C$${Number(res.data.this).toFixed(4)}</C>
-<R>SALDO NUEVO: C$${Number(res.data.new_balance).toFixed(4)}</R>
+<L>ESTE: C$${Number(res.data.this).toFixed(4)}</L>
+<L>SALDO NUEVO: C$${Number(res.data.new_balance).toFixed(4)}</L>
 
 Y Recuerde
 <M>FUNERARIA BARRANTES</M>
@@ -100,9 +104,29 @@ es la mas grande y segura en quien confiar!`)
   }, [data])
   
   const onPressed = useCallback(() => navigation.navigate('/profile', { clientId }), [clientId])
-  const onCancel = useCallback(() => {
-    setIsVisible(true)
-  }, [])
+
+  const onSubmit = useCallback(() => {
+    if (description.trim() === '') {
+      return Toast.show('Ingresa la descripcion.', Toast.SHORT)
+    }
+    setIsFetching(true)
+    request.post('?op=reciboNoPagado', { iddetallecuota: data?.data_fee.iddetail, description  })
+      .then(({ data }) => {
+        if (data.success === 1) {
+          Toast.show('Registrado correctamente.', Toast.SHORT)
+          setIsVisible(false)
+          navigation.goBack()
+        } else {
+          Toast.show('Ocurrio un error, por favor intenta de nuevo o mas tarde.', Toast.SHORT)
+        }
+      })
+      .catch(err => {
+        Toast.show('Ocurrio un error, por favor intenta de nuevo o mas tarde.', Toast.SHORT)
+      })
+      .finally(() => {
+        setIsFetching(false)
+      })
+  }, [description, data, navigation])
 
   if (isLoading && !data) return <View style={styles.containerCenter}>
     <ActivityIndicator color='#EECFD4' size='large' />
@@ -117,8 +141,10 @@ es la mas grande y segura en quien confiar!`)
           <Resize styles={{ height: 15 }} />
           <Text style={{ color: 'gray', left: 5, bottom: 3 }}>Motivo.</Text>
           <TextInput
+            value={description}
+            onChangeText={setDescription}
             placeholder='Descripcion'
-            placeholderTextColor='#000'
+            placeholderTextColor='gray'
             multiline
             style={{
               borderRadius: 10,
@@ -128,12 +154,14 @@ es la mas grande y segura en quien confiar!`)
               borderColor: '#ddd',
               paddingVertical: 0,
               paddingHorizontal: 10,
+              color: '#000'
             }}
           />
           <Resize styles={{ height: 25 }} />
           <Button
             message='Aceptar'
-            onPressed={() => setIsVisible(false)}
+            onPressed={onSubmit}
+            isLoading={isFetching}
             styles={{ backgroundColor: '#000'}}
           />
         </View>
@@ -162,9 +190,9 @@ es la mas grande y segura en quien confiar!`)
               />
               <Resize styles={{ width: 20 }} />
               <Button
-                onPressed={onCancel}
                 message='No cancelado'
                 styles={styles.warning}
+                onPressed={() => setIsVisible(true)}
               />
             </View>
 

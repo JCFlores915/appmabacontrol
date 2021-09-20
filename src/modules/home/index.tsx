@@ -26,7 +26,7 @@ export const HomeScreen: React.FC = ():ReactElement => {
   const { bottom } = useSafeAreaInsets()
   const [location, setLocation] = useState({ latitude, longitude })
   const styles = useMemo(() => factory({ insets: { bottom }}), [])
-  const [data, setData] = useState<Array<{ latitude: number, longitude: number, idclient: number, cancel: number }>>([])
+  const [data, setData] = useState<Array<{ latitude: number, longitude: number, idclient: number, cancel: number, color_status: string }>>([])
   const { user } = useAuth()
 
   const mapView = useRef<MapView>()
@@ -101,9 +101,9 @@ export const HomeScreen: React.FC = ():ReactElement => {
           return (
             <View key={JSON.stringify({ item, index})}>
               <Marker
-                pinColor={(Number(item.cancel) || 0) === 0 ? 'red' : 'blue'}
+                pinColor={item.color_status}
                 coordinate={{ latitude: Number(item.latitude), longitude: Number(item.longitude) }}
-                onPress={() => (Number(item.cancel) || 0) === 0 ? onPressedMarker(item.idclient) : {}}
+                onPress={() => (Number(item.cancel) === 0 || Number(item.cancel) === 2) ? onPressedMarker(item.idclient) : {}}
               />
             </View>
           )
