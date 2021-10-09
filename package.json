@@ -10,6 +10,7 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
+    "@mapbox/polyline": "^1.1.1",
     "@react-native-async-storage/async-storage": "^1.15.7",
     "@react-navigation/native": "^6.0.2",
     "@react-navigation/native-stack": "^6.1.0",
@@ -38,6 +39,7 @@
     "@react-native-community/eslint-config": "^2.0.0",
     "@types/jest": "^26.0.23",
     "@types/lodash": "^4.14.172",
+    "@types/mapbox__polyline": "^1.0.2",
     "@types/react-native": "^0.64.5",
     "@types/react-native-vector-icons": "^6.4.8",
     "@types/react-test-renderer": "^16.9.2",

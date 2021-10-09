@@ -5,9 +5,11 @@ import {
   Alert,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  ToastAndroid as Toast,
+  TouchableHighlight
 } from 'react-native'
-import MapView, { Marker, Polyline, MarkerAnimated } from 'react-native-maps'
+import MapView, { Marker, Callout, Polyline, MarkerAnimated } from 'react-native-maps'
 import _ from 'lodash'
 import Icon from 'react-native-vector-icons/AntDesign'
 import IconFontAwesome from 'react-native-vector-icons/FontAwesome5'
@@ -21,18 +23,23 @@ import { useAuth } from '../../context/auth.context'
 
 import request from '../../services/axios'
 
+import { getDirections } from '../../utils'
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler'
+
 interface LatLng {
   latitude: number
   longitude: number
   heading?: number
 }
-const latitude = 11.930716577776334, longitude =-85.95514852399023
 export const HomeScreen: React.FC = ():ReactElement => {
   const navigation = useNavigation()
-  const { bottom } = useSafeAreaInsets()
+  const { bottom, top } = useSafeAreaInsets()
   const [location, setLocation] = useState<LatLng>({ latitude: 0, longitude: 0 })
   const styles = useMemo(() => factory({ insets: { bottom }}), [])
   const [data, setData] = useState<Array<{ latitude: number, longitude: number, idclient: number, cancel: number, color_status: string }>>([])
+  const [coords, setCoords] = useState<Array<LatLng>>([])
+  const [state, setState] = useState<{ latitude: number, longitude: number, idclient: number, cancel: number, color_status: string }>()
+  const [clientId, setClientId] = useState(0)
   const { user } = useAuth()
 
   const mapView = useRef<MapView>()
@@ -109,6 +116,17 @@ export const HomeScreen: React.FC = ():ReactElement => {
     navigation.navigate('/scanner', { clientId })
   }, [user])
 
+  const onPressedRoute = useCallback((latlng: LatLng, id: number) => {
+    if (clientId !== id) {
+      setClientId(id)
+      getDirections(location.latitude + ',' + location.longitude, latlng.latitude + ',' + latlng.longitude)
+        .then(setCoords)
+        .catch(err => {
+          Toast.show('Ocurrio un error al intentar trazar la ruta.', Toast.SHORT)
+        })
+    }
+  }, [location, state, clientId])
+
   if (location.latitude <= 0) return <View style={styles.center}>
     <ActivityIndicator color='#EECFD4' size='large' />
     <Resize styles={{ height: 20 }} />
@@ -118,6 +136,7 @@ export const HomeScreen: React.FC = ():ReactElement => {
   return (
     <View style={styles.screen}>
       <MapView
+        provider='google'
         // initialRegion={{ latitude, longitude, latitudeDelta: 0.0143, longitudeDelta: 0.0134 }}
         ref={mapView}
         loadingEnabled
@@ -145,24 +164,70 @@ export const HomeScreen: React.FC = ():ReactElement => {
               <Marker
                 pinColor={item.color_status}
                 coordinate={{ latitude: Number(item.latitude), longitude: Number(item.longitude) }}
-                onPress={() => (Number(item.cancel) === 0 || Number(item.cancel) === 2) ? onPressedMarker(item.idclient) : {}}
+                onPress={() => (Number(item.cancel) === 0 || Number(item.cancel) === 2) ? setState(item) : {}}
               />
             </View>
           )
         })}
-        <Polyline
-          coordinates={[ { latitude: location.latitude, longitude: location.longitude }, ..._.map(data, item => ({ latitude: Number(item.latitude), longitude: Number(item.longitude) }))]}
-          strokeColor="#000"
-          strokeWidth={2}
-        />
-        {/* <Circle
-          radius={30}
-          fillColor='#000'
-          strokeColor='#000'
-          strokeWidth={3}
-          center={{ latitude: location.latitude, longitude: location.longitude }}
-        /> */}
+        {coords.length > 0 && (
+          <Polyline
+            coordinates={coords}
+            strokeColor="#000"
+            strokeWidth={3}
+          />
+        )}
       </MapView>
+
+      <View style={{
+        width: '100%',
+        height: 150,
+        position: 'absolute',
+        top: 30 + top,
+        left: 0,
+      }}>
+        {state && (
+          <View style={{
+            // backgroundColor: '#000',
+            borderRadius: 10,
+            paddingHorizontal: 10,
+            marginHorizontal: 40,
+            paddingVertical: 5,
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'row'
+          }}>
+            <View style={{ 
+              marginVertical: 10,
+              backgroundColor: '#000',
+              paddingHorizontal:20,
+              paddingVertical: 8,
+              borderRadius: 200
+            }}>
+              <TouchableOpacity onPress={() => onPressedRoute({ latitude: Number(state.latitude), longitude: Number(state.longitude) }, state.idclient)}>
+                <Text style={{
+                  color: '#fff'
+                }}>Trazar ruta</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ width: 30 }} />
+
+            <View style={{ 
+              marginVertical: 10,
+              backgroundColor: '#000',
+              paddingHorizontal:20,
+              paddingVertical: 8,
+              borderRadius: 200
+            }}>
+              <TouchableHighlight onPress={ () => onPressedMarker(state.idclient)}>
+                <Text style={{
+                  color: '#fff'
+                }}>Realizar pago</Text>
+              </TouchableHighlight>
+            </View>
+          </View>
+        )}
+      </View>
       <View style={styles.container}>
         <Button
           message='Cerrar caja de la ruta'
