@@ -57,6 +57,8 @@ export const ScannerScreen:React.FC = ({ route }):ReactElement => {
 <C>Correspondiente al mes: ${res.data.date_fee}</C>
 <C>Cobrador: ${res.data.employee}</C>
 
+<C>Tipo de cambio: 35.40</C>
+
 <L>SALDO ANTERIOR: C$${Number(res.data.previous_balance).toFixed(4)}</L>
 <L>ESTE: C$${Number(res.data.this).toFixed(4)}</L>
 <L>SALDO NUEVO: C$${Number(res.data.new_balance).toFixed(4)}</L>

@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 
 // Import screens
-import { CloseTheBox, HomeScreen, ScannerScreen, SignInScreen, SplashScreen, ProfileScreen, MatchPrinterScreen } from '../modules'
+import { CloseTheBox, HomeScreen, ScannerScreen, SignInScreen, SplashScreen, ProfileScreen, MatchPrinterScreen, ExpensesScreen } from '../modules'
 
 import { useAuth } from '../context/auth.context'
 
@@ -49,6 +49,18 @@ export const Navigator:React.FC<Props> = React.memo((props):ReactElement => {
             name='/profile' 
             component={ProfileScreen} 
           />
+
+          <Stack.Screen 
+            options={{
+              headerTitle: 'Ingresar gastos administrativos',
+              headerStyle: {
+                backgroundColor: '#EECFD4',
+              }
+            }} 
+            name='/expenses' 
+            component={ExpensesScreen} 
+          />
+
           <Stack.Screen 
             options={{
               headerTitle: '',

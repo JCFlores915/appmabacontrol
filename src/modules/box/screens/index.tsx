@@ -48,7 +48,7 @@ export const CloseTheBox:React.FC = ():ReactElement => {
 
   const renderItem = useCallback(({ item }): ReactElement => {
     return (
-      <View style={{ paddingHorizontal: 10 }}>
+      <View style={{ paddingHorizontal: 10, marginBottom: 12 }}>
         <View style={styles.row}>
           <View style={{ flexDirection: 'row' , alignItems: 'center' }}>
             <View

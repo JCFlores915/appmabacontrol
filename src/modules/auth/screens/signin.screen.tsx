@@ -2,14 +2,12 @@ import React, { ReactElement, useCallback, useMemo, useState } from 'react'
 import {
   View,
   Text,
-  Alert,
   Image,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   ToastAndroid as Toast
 } from 'react-native'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import logo from '../../../assets/images/logo.png'
@@ -69,19 +67,6 @@ export const SignInScreen: React.FC = ():ReactElement => {
               } else {
                 authenticate(response.data.data)
               }
-              
-              // const data = await AsyncStorage.getItem('@storage_printer_machine')
-              // if (!data) {
-              //   Alert.alert("Configuracion", "¿Desea agregar la impresora?", [
-              //     {
-              //       text: "No",
-              //       onPress: () => authenticate(response.data.data),
-              //     },
-              //     { text: "Si", onPress: () => navigation.navigate('/match-printer', { key: 'noauth', signIn: () => authenticate(response.data.data) }) },
-              //   ])
-              // } else {
-              //   authenticate(response.data.data)
-              // }
             } else if (value === 1) {
               setIsVisible(true)
             }
@@ -89,7 +74,9 @@ export const SignInScreen: React.FC = ():ReactElement => {
         }
       })
       .catch((err) => {
-        Toast.show('Ocurrio un error, por favor intente de nuevo o mas tarde.', Toast.SHORT)
+        Toast.show(JSON.stringify(err, null, 3), Toast.LONG)
+        // Alert.alert()
+        // Toast.show('Ocurrio un error, por favor intente de nuevo o mas tarde.', Toast.SHORT)
       })
       .finally(() => {
         setIsLoading(false)
@@ -162,15 +149,15 @@ export const SignInScreen: React.FC = ():ReactElement => {
               />
           </View>
           <Resize styles={{ height: 30 }} />
-          <View style={styles.content}>
+          {/* <View style={styles.content}>
             <TouchableOpacity onPress={() => {}}>
-              <Text style={styles.text}>Ingresar con pin</Text>
+              <Text style={styles.text}>Ingresar con pin.</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => {}}>
               <Text style={styles.text}>¿Olvidaste contraseña?</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
         </View>
       </View>
     </ScrollView>

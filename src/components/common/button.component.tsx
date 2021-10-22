@@ -13,16 +13,17 @@ type Props = {
   onPressed: () => void
   isLoading?: boolean
   styles?: StyleProp<ViewStyle>
+  activityIndicatorColor?: string
 }
 export const Button:React.FC<Props> = (props):ReactElement => {
   const styles = useMemo(() => factory({ }), [])
-  const { message, onPressed, isLoading = false } = props
+  const { message, onPressed, isLoading = false, activityIndicatorColor = '#000' } = props
 
   return (
     <TouchableOpacity activeOpacity={0.6} onPress={onPressed}>
       <View style={[styles.container, props.styles]}>
         {isLoading ? (
-          <ActivityIndicator size='small' color={'#000'} />
+          <ActivityIndicator size='small' color={activityIndicatorColor} />
         ) : (
           <Text style={styles.message}>{message}</Text>
         )}
