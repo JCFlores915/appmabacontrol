@@ -44,7 +44,7 @@ export const ScannerScreen:React.FC = ({ route }):ReactElement => {
 
   const printer = useCallback((info) => {
     request.post('?op=reciboCuota', { idfactura: info.data_fee.idenvoice, idcuentaporcobrar: info.data_fee.idreceivable, iddetallecuota: info.data_fee.iddetail })
-      .then(res => {
+      .then(async res => {
         BLEPrinter.init();
         BLEPrinter.connectPrinter(user.printer?.address)
           .then(() => {
@@ -58,14 +58,18 @@ export const ScannerScreen:React.FC = ({ route }):ReactElement => {
 <C>Cobrador: ${res.data.employee}</C>
 
 <C>Tipo de cambio: 35.40</C>
+<C>Hora: ${date.getHours()}:${date.getMinutes()}</C>
 
 <L>SALDO ANTERIOR: C$${Number(res.data.previous_balance).toFixed(4)}</L>
 <L>ESTE: C$${Number(res.data.this).toFixed(4)}</L>
 <L>SALDO NUEVO: C$${Number(res.data.new_balance).toFixed(4)}</L>
 
-Y Recuerde
-<M>FUNERARIA BARRANTES</M>
-es la mas grande y segura en quien confiar!`)
+
+<C>--------------------------</C>
+<C>Firma del Colector</C>
+
+<C>FUNERARIA BARRANTES</C>
+<C>SIEMPRE LIDER EN FUNERARIA</C>`)
             navigation.goBack()
           })
           .catch(err => {

@@ -43,6 +43,7 @@ const OpenBox:React.FC<Props> = (props):ReactElement => {
       }
     })
     .catch(err => {
+      console.log('err -> ', err)
       Toast.show('Ocurrio un error al momento de guardar el monto.', Toast.SHORT)
     })
     .finally(() => {

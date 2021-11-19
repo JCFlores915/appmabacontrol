@@ -23,6 +23,7 @@ import { useAuth } from '../../context/auth.context'
 import request from '../../services/axios'
 
 import { getDirections } from '../../utils'
+import { useLocation } from '../../hooks/useLocation'
 
 interface LatLng {
   latitude: number
@@ -32,7 +33,7 @@ interface LatLng {
 export const HomeScreen: React.FC = ():ReactElement => {
   const navigation = useNavigation()
   const { bottom, top } = useSafeAreaInsets()
-  const [location, setLocation] = useState<LatLng>({ latitude: 0, longitude: 0 })
+  const {location, loading} = useLocation()
   const styles = useMemo(() => factory({ insets: { bottom }}), [])
   const [data, setData] = useState<Array<{ latitude: number, longitude: number, idclient: number, cancel: number, color_status: string, name: string }>>([])
   const [coords, setCoords] = useState<Array<LatLng>>([])
@@ -52,13 +53,12 @@ export const HomeScreen: React.FC = ():ReactElement => {
   })
 
   useEffect(() => {
-    Geolocation.getCurrentPosition(({ coords: { latitude, longitude } }) => {
-      setLocation({ latitude, longitude })
+    if (!loading && location.latitude > 0) {
       if (mapView.current !== undefined) {
         mapView.current.animateCamera({
           center: {
-            latitude,
-            longitude,
+            latitude: location.latitude,
+            longitude: location.longitude,
           },
           pitch: 0,
           heading: 0,
@@ -66,39 +66,57 @@ export const HomeScreen: React.FC = ():ReactElement => {
           zoom: 15,
         })
       }
-      // console.log('geolocation  => ', latitude, longitude)
-    }, err => {
-      console.log(err)
-    }, {
-      distanceFilter: 0,
-      enableHighAccuracy: true,
-      showLocationDialog: true
-    })
-  }, [mapView])
+    }
+  }, [loading, location, mapView])
 
   // useEffect(() => {
-  //   const timeoutId = setTimeout(() => {
-  //     const watchId = Geolocation.watchPosition(({ coords: { latitude, longitude, heading } }) => {
-  //       if (marker.current) {
-  //         marker.current.animateMarkerToCoordinate({ latitude, longitude }, 7000)
-  //       }
-  //     }, err => {
-  //       console.log(err)
-  //     }, {
-  //       distanceFilter: 0,
-  //       enableHighAccuracy: true,
-  //       showLocationDialog: true
-  //     })
-  
-  //     return () => {
-  //       Geolocation.clearWatch(watchId)
+  //   Geolocation.getCurrentPosition(({ coords: { latitude, longitude } }) => {
+  //     setLocation({ latitude, longitude })
+  //     if (mapView.current !== undefined) {
+  //       mapView.current.animateCamera({
+  //         center: {
+  //           latitude,
+  //           longitude,
+  //         },
+  //         pitch: 0,
+  //         heading: 0,
+  //         altitude: 1000,
+  //         zoom: 15,
+  //       })
   //     }
-  //   }, 8000)
+  //     // console.log('geolocation  => ', latitude, longitude)
+  //   }, err => {
+  //     console.log(err)
+  //   }, {
+  //     distanceFilter: 0,
+  //     enableHighAccuracy: true,
+  //     showLocationDialog: true
+  //   })
+  // }, [mapView])
 
-  //   return () => {
-  //     clearTimeout(timeoutId)
-  //   }
-  // }, [])
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const watchId = Geolocation.watchPosition(({ coords: { latitude, longitude, heading } }) => {
+        if (marker.current) {
+          marker.current.animateMarkerToCoordinate({ latitude, longitude }, 7000)
+        }
+      }, err => {
+        console.log(err)
+      }, {
+        distanceFilter: 0,
+        enableHighAccuracy: true,
+        showLocationDialog: true
+      })
+  
+      return () => {
+        Geolocation.clearWatch(watchId)
+      }
+    }, 8000)
+
+    return () => {
+      clearTimeout(timeoutId)
+    }
+  }, [])
 
   const onPressed = useCallback(() => navigation.navigate('/closethebox', { }),[])
   const onPressedExpreses = useCallback(() => navigation.navigate('/expenses'), [])
@@ -116,9 +134,8 @@ export const HomeScreen: React.FC = ():ReactElement => {
     navigation.navigate('/scanner', { clientId })
   }, [user])
 
-  console.log('location -> ', location)
   const onPressedRoute = useCallback((latlng: LatLng, id: number, item) => {
-    console.log('onPressedRoute -> ', location)
+    // console.log('onPressedRoute -> ', location)
     if (clientId !== id) {
       setIsLoading(true)
       getDirections(location.latitude + ',' + location.longitude, latlng.latitude + ',' + latlng.longitude)
@@ -151,11 +168,11 @@ export const HomeScreen: React.FC = ():ReactElement => {
     onPressedRoute({ latitude: Number(item.latitude), longitude: Number(item.longitude) }, item.idclient, item)
   }, [location, state, clientId])
 
-  if (location.latitude <= 0) return <View style={styles.center}>
-    <ActivityIndicator color='#EECFD4' size='large' />
-    <Resize styles={{ height: 20 }} />
-    <Text>Obteniendo ubicacion, por favor espere.</Text>
-  </View>
+  // if (loading) return <View style={styles.center}>
+  //   <ActivityIndicator color='#EECFD4' size='large' />
+  //   <Resize styles={{ height: 20 }} />
+  //   <Text>Obteniendo ubicacion, por favor espere.</Text>
+  // </View>
 
   return (
     <View style={styles.screen}>
@@ -173,7 +190,7 @@ export const HomeScreen: React.FC = ():ReactElement => {
       >
         <MarkerAnimated
           ref={marker}
-          coordinate={{ latitude: location.latitude, longitude: location.longitude }}
+          coordinate={{ latitude: location?.latitude, longitude: location?.longitude }}
         >
           <IconFontAwesome 
             name='truck-moving'

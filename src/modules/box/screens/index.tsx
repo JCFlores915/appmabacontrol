@@ -81,7 +81,7 @@ export const CloseTheBox:React.FC = ():ReactElement => {
         onToggle={onToggle}
       />
       <FlatList
-        data={[...data.detalle_cuota]}
+        data={data?.detalle_cuota ? [...data?.detalle_cuota] : []}
         renderItem={renderItem}
         keyExtractor={(item, index) => JSON.stringify({ item, index})}
         ListHeaderComponent={<View style={[styles.row, styles.wrapper]}>

@@ -5734,6 +5734,11 @@ react-native-bluetooth-classic@^1.60.0-rc.17:
   dependencies:
     buffer "^5.4.3"
 
+react-native-bluetooth-escpos-printer@^0.0.5:
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/react-native-bluetooth-escpos-printer/-/react-native-bluetooth-escpos-printer-0.0.5.tgz#45a31d37c213f95f2cc590cebcb48e0574ce1b45"
+  integrity sha512-a+GTlz8dctb48wkoJ8woE7gV24NCOoA13J95A+RFEKhjONEWf3/dP5pIqrrlO5fsf/2QYDeMfU3P8bIVQoEqig==
+
 react-native-camera@3.43.5:
   version "3.43.5"
   resolved "https://registry.yarnpkg.com/react-native-camera/-/react-native-camera-3.43.5.tgz#0b1509cfc5e44146be790d2f10e8d8148a1f9181"
