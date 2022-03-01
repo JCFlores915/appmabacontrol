@@ -9,7 +9,7 @@ import {
 import Modal from 'react-native-modal'
 import Icon from 'react-native-vector-icons/MaterialIcons'
 
-import { BLEPrinter } from 'react-native-thermal-receipt-printer'
+import { BLEPrinter } from 'react-native-thermal-receipt-printer-image-qr'
 
 import { Button, Resize, Input } from '../../../components/common'
 import { useAuth } from '../../../context/auth.context'
@@ -19,22 +19,23 @@ import request from '../../../services/axios'
 type Props = {
   isVisible: boolean
   onToggle: () => void
+  data: Array<{
+
+  }>
+  total: number
 }
 const DetailsModal:React.FC<Props> = (props):ReactElement => {
   let timeoutId: NodeJS.Timeout
   const { user, signOut } = useAuth()
   const styles = useMemo(() => factory({ }), [])
-  const [values, setValues] = useState('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const onPressed = useCallback(() => {
-    if (!values) return Toast.show('Ingrese el total en cordoba.', Toast.SHORT)
-
     setIsLoading(true)
     request.post('?op=cierreCaja', {
       idempleado: user.id,
       idoperaciones: user.idapartura,
-      montocierrecordoba: values,
+      montocierrecordoba: props.total,
       montocierredolar: 0,
       montoconversion: 0,
       totalcierre: 0
@@ -48,39 +49,48 @@ const DetailsModal:React.FC<Props> = (props):ReactElement => {
             idoperaciones: user.idapartura
           })
             .then((res) => {
+              console.log('res -> ', res)
               BLEPrinter.init();
               BLEPrinter.connectPrinter(user.printer?.address)
                 .then(() => {
                   const date = new Date()
+                  let information = ''
+                  props.data.forEach(el => {
+                    information += `  ${el.idfactura}           ${date.getHours()}:${date.getMinutes()}      C$${Number(el.saldofinal).toFixed(2)}      Anticipo\n`  
+                  })
 
                   BLEPrinter.printBill(`
-<C><B>Cierre de ruta</B></C>
+<C><B>Cierre de cobro</B></C>
 
-<C>Nombre Empleado: ${user.name}</C>
-<C>Fecha del Cierre: ${date.getDay()}-${date.getMonth()}-${date.getFullYear()}</C>
-<C>Hora del Cierre: ${date.getHours()}:${date.getMinutes()}</C>
+<C>Tipo de cierre: Plan de Necesidad</C>
+<C>${date.getDay()}/${date.getMonth()}/${date.getFullYear()} Hora: ${date.getHours()}:${date.getMinutes()}</C>
+<C>Ruta Numero: 1</C>
 
-<L>Total Cuotas Pagadas: C$${Number(res.data.total_cuotas_pagadas).toFixed(4)}</L>
-<L>Total Apertura: C$${Number(res.data.total_apertura).toFixed(4)}</L>
-<L>Total Gastos Administrativos: C$${Number(res.data.total_gasto_administrativo).toFixed(4)}</L>
-<L>Total en Caja: C$${Number(res.data.total_cierre).toFixed(4)}</L>
-
-<L>Recuento: ${Number(res.data.recuento).toFixed(4)}</L>
-<L>Descuadro: ${Number(res.data.descuadro).toFixed(4)}</L>
+Codigo        Hora       Monto       Concepto
 
 
+${information}
 
-<C>--------------------------</C>
-<C>Firma del Empleado</C>
+<C>Total: C$${Number(res.data.total_cuotas_pagadas).toFixed(4)}</C>
 
 
+<C>Yo ${user.name} doy fe de haber recibido el dinero que en este documento se detalla.</C>
 
 <C>--------------------------</C>
-<C>Firma Recibido</C>
+<C>Colector</C>
 
 
-<C>FUNERARIA BARRANTES</C>
-<C>SIEMPRE LIDER EN FUNERARIA</C>`)
+
+<L>Depositado en: -------------------------------</L>
+
+
+<L>Minuta #: ------------------------------- </L>
+
+
+<C> ------------------------------- </C>
+<C>Recibido</C>
+<C>(Administración)</C>
+`)
               })
 
               timeoutId = setTimeout(() => {
@@ -102,11 +112,7 @@ const DetailsModal:React.FC<Props> = (props):ReactElement => {
       .finally(() => {
         setIsLoading(false)
       })
-  }, [values, user, props])
-
-  const onChange = useCallback((value: string) => {
-    setValues(value)
-  }, [])
+  }, [user, props])
 
   return (
     <Modal
@@ -130,39 +136,19 @@ const DetailsModal:React.FC<Props> = (props):ReactElement => {
         </View>
         <Resize styles={{ height: 20 }} />
         <View>
-          <Input
-            label='Total cordoba'
-            customProps={{
-              onChangeText: (value: string) => onChange(value),
-              keyboardType: 'numeric',
-              value: values
-            }}
-            icon={{ name: 'cash' }}
-            containerStyle={{ marginBottom: 18 }}
-          />
-
-          {/* <Input
-            label='Total dolar'
-            customProps={{
-              onChangeText: (value: string) => onChange(value, 'dolar'),
-              value: values.dolar,
-              keyboardType: 'numeric',
-            }}
-            icon={{ name: 'account' }}
-            containerStyle={{ marginBottom: 18 }}
-          />
-
-          <Input
-            label='Total conversion'
-            customProps={{
-              onChangeText: (value: string) => onChange(value, 'total'),
-              keyboardType: 'numeric',
-              value: values.total,
-              editable: false
-            }}
-            icon={{ name: 'account' }}
-            containerStyle={{ marginBottom: 18 }}
-          /> */}
+          <View pointerEvents='none'>
+            <Input
+              label='Total cordoba'
+              customProps={{
+                keyboardType: 'numeric',
+                value: Number(props.total).toFixed(4),
+                
+              }}
+              
+              icon={{ name: 'cash' }}
+              containerStyle={{ marginBottom: 18 }}
+            />
+          </View>
 
           <Resize styles={{ height: 40 }} />
           <Button 

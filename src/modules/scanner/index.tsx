@@ -5,14 +5,18 @@ import {
   TextInput,
   StyleSheet,
   ActivityIndicator,
-  ToastAndroid as Toast
+  ToastAndroid as Toast,
+  TouchableOpacity
 } from 'react-native'
 import QRCodeScanner from "react-native-qrcode-scanner"
 import { BarCodeReadEvent } from 'react-native-camera'
 import { useNavigation } from '@react-navigation/native'
-import { BLEPrinter } from 'react-native-thermal-receipt-printer'
+import { BLEPrinter } from 'react-native-thermal-receipt-printer-image-qr'
+import Icon from 'react-native-vector-icons/MaterialIcons'
 
-import { Button, Resize, Input } from '../../components/common'
+import Geolocation from 'react-native-geolocation-service'
+
+import { Button, Resize } from '../../components/common'
 
 import Modal from 'react-native-modal'
 
@@ -35,6 +39,22 @@ export const ScannerScreen:React.FC = ({ route }):ReactElement => {
     request.post('?op=detallesCliente', { idcliente: clientId })
       .then(res => {
         setData(res.data)
+
+        if (res.data?.data_fee.late_fee >= res.data?.data_fee.valid_fee) {
+          BLEPrinter.init();
+          BLEPrinter.connectPrinter(user.printer?.address)
+            .then(() => {
+              BLEPrinter.printImage('https://www.dev-mabacontrol.xyz/mabacontrol/maba_venta/utilidades/img/print/logo.png', { imageWidth: 200 })
+              BLEPrinter.printBill(`
+<C><B>NOTIFICACION DEL PLAN</B></C>
+<L>Estimado cliente le comunicamos que su plan se encuentra de baja en nuestro sistema por incumplimiento a la clausula de retraso del pago de las cuotas, le recomendamos presentarse a nuestras oficinas en un tiempo no mayor de 30 dias.</L>
+<C>¡LA BARRANTES SIEMPRE LIDER EN FUNERARIAS!</C>
+              `)
+            })
+            .catch(err => {
+              Toast.show('Error al conectarse con la impresora.', Toast.SHORT)
+            })
+        }
       })
       .finally(() => {
         setIsLoading(false)
@@ -49,24 +69,30 @@ export const ScannerScreen:React.FC = ({ route }):ReactElement => {
         BLEPrinter.connectPrinter(user.printer?.address)
           .then(() => {
             const date = new Date()
+            BLEPrinter.printImage('https://www.dev-mabacontrol.xyz/mabacontrol/maba_venta/utilidades/img/print/logo.png', { imageWidth: 200 })
             BLEPrinter.printBill(`
-<C><B>Recibo de Pago</B></C>
+<C><B>Recibo Nº - ${res.data.idconsecutivo}</B></C>
+<C>Codigo: ${res.data.idfactura}</C>
 
 <C>Cliente: ${res.data.client || info.name}</C>
-<C>Fecha Actual: ${date.getDay()}-${date.getMonth()}-${date.getFullYear()}</C>
+<C>Concepto: Anticipo</C>
+<C>Fecha Actual: ${date.getDay()}-${date.getMonth()}-${date.getFullYear()}  Hora: ${date.getHours()}:${date.getMinutes()}</C>
 <C>Correspondiente al mes: ${res.data.date_fee}</C>
 <C>Cobrador: ${res.data.employee}</C>
 
-<C>Tipo de cambio: 35.40</C>
-<C>Hora: ${date.getHours()}:${date.getMinutes()}</C>
 
 <L>SALDO ANTERIOR: C$${Number(res.data.previous_balance).toFixed(4)}</L>
-<L>ESTE: C$${Number(res.data.this).toFixed(4)}</L>
+<L>ESTE ABONO: C$${Number(res.data.this).toFixed(4)}</L>
 <L>SALDO NUEVO: C$${Number(res.data.new_balance).toFixed(4)}</L>
 
 
-<C>--------------------------</C>
-<C>Firma del Colector</C>
+
+<C>----------------------------</C>
+<C>Colector</C>
+
+
+<C><B>Nota Importante</B></C>
+<C>No permita que el colector le cambie este tipo de recibo.</C>
 
 <C>FUNERARIA BARRANTES</C>
 <C>SIEMPRE LIDER EN FUNERARIA</C>`)
@@ -78,9 +104,6 @@ export const ScannerScreen:React.FC = ({ route }):ReactElement => {
       })
       .catch(err => {
         Toast.show('Ocurrio un error al generar la factura, por favor intente de nuevo.', Toast.SHORT)
-      })
-      .finally(() => {
-
       })
   }, [user, navigation])
 
@@ -116,22 +139,30 @@ export const ScannerScreen:React.FC = ({ route }):ReactElement => {
       return Toast.show('Ingresa la descripcion.', Toast.SHORT)
     }
     setIsFetching(true)
-    request.post('?op=reciboNoPagado', { iddetallecuota: data?.data_fee.iddetail, description  })
-      .then(({ data }) => {
-        if (data.success === 1) {
-          Toast.show('Registrado correctamente.', Toast.SHORT)
-          setIsVisible(false)
-          navigation.goBack()
-        } else {
+    Geolocation.getCurrentPosition(({ coords: { latitude, longitude } }) => {
+      request.post('?op=reciboNoPagado', { iddetallecuota: data?.data_fee.iddetail, description, latitude, longitude })
+        .then(({ data }) => {
+          if (data.success === 1) {
+            Toast.show('Registrado correctamente.', Toast.SHORT)
+            setIsVisible(false)
+            navigation.goBack()
+          } else {
+            Toast.show('Ocurrio un error, por favor intenta de nuevo o mas tarde.', Toast.SHORT)
+          }
+        })
+        .catch(err => {
           Toast.show('Ocurrio un error, por favor intenta de nuevo o mas tarde.', Toast.SHORT)
-        }
-      })
-      .catch(err => {
-        Toast.show('Ocurrio un error, por favor intenta de nuevo o mas tarde.', Toast.SHORT)
-      })
-      .finally(() => {
-        setIsFetching(false)
-      })
+        })
+        .finally(() => {
+          setIsFetching(false)
+        })
+    }, err => {
+      console.log(err)
+    }, {
+      distanceFilter: 0,
+      enableHighAccuracy: true,
+      showLocationDialog: true
+    })
   }, [description, data, navigation])
 
   if (isLoading && !data) return <View style={styles.containerCenter}>
@@ -143,7 +174,24 @@ export const ScannerScreen:React.FC = ({ route }):ReactElement => {
         isVisible={isVisible}
       >
         <View style={styles.modal}>
-          <Text style={{ textAlign: 'center', fontWeight: 'bold', fontSize: 16 }}>RECIBO NO CANCELADO.</Text>
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <Text style={{ textAlign: 'center', fontWeight: 'bold', fontSize: 16 }}>RECIBO NO CANCELADO.</Text>
+            <View>
+              <TouchableOpacity onPress={() => setIsVisible(false)}>
+                <View style={styles.icon}>
+                  <Icon
+                    color='#697477'
+                    name="close"
+                    size={32}
+                  />
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
           <Resize styles={{ height: 15 }} />
           <Text style={{ color: 'gray', left: 5, bottom: 3 }}>Motivo.</Text>
           <TextInput
@@ -172,40 +220,60 @@ export const ScannerScreen:React.FC = ({ route }):ReactElement => {
           />
         </View>
       </Modal>
-      <QRCodeScanner
-        cameraStyle={{ height: '45%', width: '100%' }}
-        markerStyle={styles.marker}
-        showMarker
-        onRead={onRead}
-        bottomContent={
-          <View style={styles.container}>
-            <Text style={[styles.text, { fontSize: 24 }]}>CUOTA NO: {String(data?.data_fee.number_fee)}</Text>
 
-            <Resize styles={{ height: 5 }} />
-            <Text style={[styles.text, { fontSize: 15 }]}>Nombre: {data.name}</Text>
-            <Resize styles={{ height: 10 }} />
-
-            <Text style={[styles.text, { fontSize: 18 }]}>Cedula: {data.identification_card}</Text>
-            <Resize styles={{ height: 30 }} />
-
-            <View style={{ flexDirection: 'row'}}>
-              <Button
-                onPressed={onPressed}
-                styles={styles.button}
-                message='Detalle del cliente'
-              />
-              <Resize styles={{ width: 20 }} />
-              <Button
-                message='No cancelado'
-                styles={styles.warning}
-                onPressed={() => setIsVisible(true)}
-              />
-            </View>
-
-            <Resize styles={{ height: 10 }} />
+      {data?.data_fee.late_fee >= data?.data_fee.valid_fee && (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text>El plan sobre paso el limite de cuotas retresadas, favor entregarle al cliente el recibo impreso por la aplicacion en estos momentos.</Text>
+          <View style={{
+            marginTop: 8,
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Button
+              message='Inicio'
+              onPressed={() => navigation.goBack()}
+              styles={{ backgroundColor: '#000'}}
+            />
           </View>
-        }
-      />
+        </View>
+      )}
+
+      {!(data?.data_fee.late_fee >= data?.data_fee.valid_fee) && (
+        <QRCodeScanner
+          cameraStyle={{ height: '45%', width: '100%' }}
+          markerStyle={styles.marker}
+          showMarker
+          onRead={onRead}
+          bottomContent={
+            <View style={styles.container}>
+              <Text style={[styles.text, { fontSize: 24 }]}>CUOTA NO: {String(data?.data_fee.number_fee)}</Text>
+  
+              <Resize styles={{ height: 5 }} />
+              <Text style={[styles.text, { fontSize: 15 }]}>Nombre: {data.name}</Text>
+              <Resize styles={{ height: 10 }} />
+  
+              <Text style={[styles.text, { fontSize: 18 }]}>Cedula: {data.identification_card}</Text>
+              <Resize styles={{ height: 30 }} />
+  
+              <View style={{ flexDirection: 'row'}}>
+                <Button
+                  onPressed={onPressed}
+                  styles={styles.button}
+                  message='Detalle del cliente'
+                />
+                <Resize styles={{ width: 20 }} />
+                <Button
+                  message='No cancelado'
+                  styles={styles.warning}
+                  onPressed={() => setIsVisible(true)}
+                />
+              </View>
+  
+              <Resize styles={{ height: 10 }} />
+            </View>
+          }
+        />
+      )}
     </View>
   )
 }
@@ -241,6 +309,11 @@ const factory = (conditions: any) => {
       backgroundColor: '#F3F8FD',
       paddingHorizontal: 12,
       paddingVertical: 20
-    }
+    },
+    icon: {
+      alignSelf: 'flex-end',
+      paddingHorizontal: 4,
+      paddingVertical: 4
+    },
   })
 }

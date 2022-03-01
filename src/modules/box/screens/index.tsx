@@ -77,8 +77,10 @@ export const CloseTheBox:React.FC = ():ReactElement => {
   return (
     <View style={styles.screen}>
       <DetailsModal
+        data={data?.detalle_cuota ? [...data?.detalle_cuota] : []}
         isVisible={isVisible}
         onToggle={onToggle}
+        total={data?.total.total_final}
       />
       <FlatList
         data={data?.detalle_cuota ? [...data?.detalle_cuota] : []}

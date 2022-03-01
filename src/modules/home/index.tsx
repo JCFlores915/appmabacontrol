@@ -25,6 +25,11 @@ import request from '../../services/axios'
 import { getDirections } from '../../utils'
 import { useLocation } from '../../hooks/useLocation'
 
+import {
+  COMMANDS,
+  BLEPrinter
+} from 'react-native-thermal-receipt-printer-image-qr'
+
 interface LatLng {
   latitude: number
   longitude: number
@@ -69,31 +74,6 @@ export const HomeScreen: React.FC = ():ReactElement => {
     }
   }, [loading, location, mapView])
 
-  // useEffect(() => {
-  //   Geolocation.getCurrentPosition(({ coords: { latitude, longitude } }) => {
-  //     setLocation({ latitude, longitude })
-  //     if (mapView.current !== undefined) {
-  //       mapView.current.animateCamera({
-  //         center: {
-  //           latitude,
-  //           longitude,
-  //         },
-  //         pitch: 0,
-  //         heading: 0,
-  //         altitude: 1000,
-  //         zoom: 15,
-  //       })
-  //     }
-  //     // console.log('geolocation  => ', latitude, longitude)
-  //   }, err => {
-  //     console.log(err)
-  //   }, {
-  //     distanceFilter: 0,
-  //     enableHighAccuracy: true,
-  //     showLocationDialog: true
-  //   })
-  // }, [mapView])
-
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       const watchId = Geolocation.watchPosition(({ coords: { latitude, longitude, heading } }) => {
@@ -117,6 +97,7 @@ export const HomeScreen: React.FC = ():ReactElement => {
       clearTimeout(timeoutId)
     }
   }, [])
+
 
   const onPressed = useCallback(() => navigation.navigate('/closethebox', { }),[])
   const onPressedExpreses = useCallback(() => navigation.navigate('/expenses'), [])
@@ -162,27 +143,16 @@ export const HomeScreen: React.FC = ():ReactElement => {
       }}
     ])
   }, [])
-
-// onPressedRoute({ latitude: Number(state.latitude), longitude: Number(state.longitude) }, state.idclient)
   const onPressedDrawRoute = useCallback((item) => {
     onPressedRoute({ latitude: Number(item.latitude), longitude: Number(item.longitude) }, item.idclient, item)
   }, [location, state, clientId])
-
-  // if (loading) return <View style={styles.center}>
-  //   <ActivityIndicator color='#EECFD4' size='large' />
-  //   <Resize styles={{ height: 20 }} />
-  //   <Text>Obteniendo ubicacion, por favor espere.</Text>
-  // </View>
 
   return (
     <View style={styles.screen}>
       <MapView
         provider='google'
-        // initialRegion={{ latitude, longitude, latitudeDelta: 0.0143, longitudeDelta: 0.0134 }}
         ref={mapView}
         loadingEnabled
-        // showsUserLocation
-        // followsUserLocation
         style={styles.screen}
         loadingIndicatorColor='#EECFD4'
         loadingBackgroundColor='#F3F8FD'
@@ -194,7 +164,7 @@ export const HomeScreen: React.FC = ():ReactElement => {
         >
           <IconFontAwesome 
             name='truck-moving'
-            size={30}
+            size={20}
             color='gray'
           />
         </MarkerAnimated>
@@ -205,12 +175,10 @@ export const HomeScreen: React.FC = ():ReactElement => {
               <Marker
                 pinColor={item.color_status}
                 coordinate={{ latitude: Number(item.latitude), longitude: Number(item.longitude) }}
-                // onPress={() => (Number(item.cancel) === 0 || Number(item.cancel) === 2) ? setState(item) : {}}
                 onPress={() => (Number(item.cancel) === 0 || Number(item.cancel) === 2) ? onPressedDrawRoute(item) : {}}
               />
               <Marker
                 coordinate={{ latitude: Number(item.latitude), longitude: Number(item.longitude) }}
-                // centerOffset={{ x: 60, y: 60 }}
                 anchor={{ x: 0, y: 0 }}
               >
                 <View>
@@ -264,22 +232,6 @@ export const HomeScreen: React.FC = ():ReactElement => {
             justifyContent: 'center',
             flexDirection: 'row'
           }}>
-            {/* <View style={{ 
-              marginVertical: 10,
-              backgroundColor: '#000',
-              paddingHorizontal:20,
-              paddingVertical: 8,
-              borderRadius: 200
-            }}>
-              <TouchableOpacity onPress={() => onPressedRoute({ latitude: Number(state.latitude), longitude: Number(state.longitude) }, state.idclient)}>
-                <Text style={{
-                  color: '#fff'
-                }}>Trazar ruta</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ width: 30 }} /> */}
-
             <TouchableOpacity onPress={ () => onPressedMarker(state.idclient)}>
               <View style={{ 
                 marginVertical: 10,
