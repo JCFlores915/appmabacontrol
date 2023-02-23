@@ -35,14 +35,16 @@ interface LatLng {
   longitude: number
   heading?: number
 }
-export const HomeScreen: React.FC = ():ReactElement => {
+export const HomeScreen: React.FC = (): ReactElement => {
   const navigation = useNavigation()
   const { bottom, top } = useSafeAreaInsets()
-  const {location, loading} = useLocation()
-  const styles = useMemo(() => factory({ insets: { bottom }}), [])
-  const [data, setData] = useState<Array<{ latitude: number, longitude: number, idclient: number, cancel: number, color_status: string, name: string }>>([])
+  const { location, loading } = useLocation()
+  const styles = useMemo(() => factory({ insets: { bottom } }), [])
+  const [data, setData] = useState<Array<{ latitude: number, longitude: number, idclient: number, cancel: number, color_status: string, name: string, idsale: number }>>([])
   const [coords, setCoords] = useState<Array<LatLng>>([])
-  const [state, setState] = useState<{ latitude: number, longitude: number, idclient: number, cancel: number, color_status: string, name: string }>()
+  const [state, setState] = useState<{ latitude: number, longitude: number, idclient: number, cancel: number, color_status: string, name: string, idsale: number }>()
+  const [idfacturaventa, setIdFaturaVenta] = useState(0);
+  const [view, setViewNew] = useState(false);
   const [clientId, setClientId] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const { user, signOut } = useAuth()
@@ -54,6 +56,7 @@ export const HomeScreen: React.FC = ():ReactElement => {
     request.post('?op=rutasAsignadas', { id: user.id })
       .then(response => {
         setData(response.data)
+        console.log("RUTAS ASIGNADAS", response.data);
       })
   })
 
@@ -87,7 +90,7 @@ export const HomeScreen: React.FC = ():ReactElement => {
         enableHighAccuracy: true,
         showLocationDialog: true
       })
-  
+
       return () => {
         Geolocation.clearWatch(watchId)
       }
@@ -98,18 +101,35 @@ export const HomeScreen: React.FC = ():ReactElement => {
     }
   }, [])
 
+  const viewOptionCuote = (idsale: any, value: boolean) => {
+    setViewNew(value);
+    setIdFaturaVenta(idsale);
+  }
 
-  const onPressed = useCallback(() => navigation.navigate('/closethebox', { }),[])
+  const newCoute = (idsale: any) => {
+    request.post('?op=newCoute', { idsale: idsale })
+      .then(response => {
+        // let data = JSON.parse(response.data);
+        // setM(response.data)
+        Toast.show(response.data.message, Toast.SHORT)
+        console.log("RUTAS ASIGNADAS", response.data);
+      })
+  }
+
+
+  const onPressed = useCallback(() => navigation.navigate('/closethebox', {}), [])
   const onPressedExpreses = useCallback(() => navigation.navigate('/expenses'), [])
-  
+
   const onPressedConfig = useCallback(() => navigation.navigate('/match-printer'), [])
 
   const onPressedMarker = useCallback((clientId: number) => {
     if (!user.printer?.address) {
       return Alert.alert('Advertencia', 'No tienes vinculada una impresora, antes de continuar por favor vincula la impresora.', [
-        { text: 'OK', onPress: () => {
-          navigation.navigate('/match-printer')
-        }}
+        {
+          text: 'OK', onPress: () => {
+            navigation.navigate('/match-printer')
+          }
+        }
       ])
     }
     navigation.navigate('/scanner', { clientId })
@@ -137,10 +157,12 @@ export const HomeScreen: React.FC = ():ReactElement => {
 
   const onPressedLogout = useCallback(() => {
     Alert.alert('CERRAR SESION', '¿Seguro que quieres cerrar la sesion?', [
-      { text: 'NO', onPress: () => {} },
-      { text: 'SI', onPress: () => {
-        signOut()
-      }}
+      { text: 'NO', onPress: () => { } },
+      {
+        text: 'SI', onPress: () => {
+          signOut()
+        }
+      }
     ])
   }, [])
   const onPressedDrawRoute = useCallback((item) => {
@@ -162,7 +184,7 @@ export const HomeScreen: React.FC = ():ReactElement => {
           ref={marker}
           coordinate={{ latitude: location?.latitude, longitude: location?.longitude }}
         >
-          <IconFontAwesome 
+          <IconFontAwesome
             name='truck-moving'
             size={20}
             color='gray'
@@ -171,11 +193,11 @@ export const HomeScreen: React.FC = ():ReactElement => {
 
         {_.map(data, (item, index) => {
           return (
-            <View key={JSON.stringify({ item, index})}>
+            <View key={JSON.stringify({ item, index })}>
               <Marker
                 pinColor={item.color_status}
                 coordinate={{ latitude: Number(item.latitude), longitude: Number(item.longitude) }}
-                onPress={() => (Number(item.cancel) === 0 || Number(item.cancel) === 2) ? onPressedDrawRoute(item) : {}}
+                onPress={() => (Number(item.cancel) === 0 || Number(item.cancel) === 2) ? onPressedDrawRoute(item) : viewOptionCuote(item.idsale, true)}
               />
               <Marker
                 coordinate={{ latitude: Number(item.latitude), longitude: Number(item.longitude) }}
@@ -208,7 +230,7 @@ export const HomeScreen: React.FC = ():ReactElement => {
           justifyContent: 'center',
           alignItems: 'center'
         }}>
-          <View style={{ }}>
+          <View style={{}}>
             <ActivityIndicator color='#000' size='large' />
           </View>
         </View>
@@ -232,19 +254,48 @@ export const HomeScreen: React.FC = ():ReactElement => {
             justifyContent: 'center',
             flexDirection: 'row'
           }}>
-            <TouchableOpacity onPress={ () => onPressedMarker(state.idclient)}>
-              <View style={{ 
+            <TouchableOpacity onPress={() => onPressedMarker(state.idclient)}>
+              <View style={{
                 marginVertical: 10,
                 backgroundColor: '#000',
-                paddingHorizontal:20,
+                paddingHorizontal: 20,
                 paddingVertical: 10,
                 borderRadius: 200,
                 minWidth: 220,
-                }}>
-                  <Text style={{
-                    color: '#fff',
-                    textAlign: 'center'
-                  }}>Realizar pago</Text>
+              }}>
+                <Text style={{
+                  color: '#fff',
+                  textAlign: 'center'
+                }}>Realizar pago</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {view && (
+          <View style={{
+            // backgroundColor: '#000',
+            borderRadius: 10,
+            paddingHorizontal: 10,
+            marginHorizontal: 40,
+            paddingVertical: 5,
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'row'
+          }}>
+            <TouchableOpacity onPress={() => newCoute(idfacturaventa)}>
+              <View style={{
+                marginVertical: 10,
+                backgroundColor: 'blue',
+                paddingHorizontal: 20,
+                paddingVertical: 10,
+                borderRadius: 200,
+                minWidth: 220,
+              }}>
+                <Text style={{
+                  color: '#fff',
+                  textAlign: 'center'
+                }}>Nueva Cuota</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -308,7 +359,7 @@ const factory = (conditions: any) => {
     },
     center: {
       flex: 1,
-      backgroundColor:'#F3F8FD',
+      backgroundColor: '#F3F8FD',
       justifyContent: 'center',
       alignItems: 'center'
     }
