@@ -19,18 +19,18 @@ type Props = {
   userId: number
 }
 const OpenBox:React.FC<Props> = (props):ReactElement => {
-  const [amount, setAmount] = useState('')
+  const [amount, setAmount] = useState('0')
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
-  const onChange = useCallback((value: string) => {
-    if (value === '-') return Toast.show('Valor invalido.', Toast.SHORT)
-    setAmount(value)
-  }, [])
+  // const onChange = useCallback((value: string) => {
+  //   if (value === '-') return Toast.show('Valor invalido.', Toast.SHORT)
+  //   setAmount(Number(value))
+  // }, [])
 
   const onPressed = useCallback(() => {
-    if (Number(amount) <= 0) {
-      return Toast.show('Ingrese un monto valido.', Toast.SHORT)
-    }
+    // if (Number(amount) <= 0) {
+    //   return Toast.show('Ingrese un monto valido.', Toast.SHORT)
+    // }
     setIsLoading(true)
     request.post('?op=aperturaCaja', { idempleado: props.userId, montoapertura: amount })
     .then(({ data }) => {
@@ -61,15 +61,15 @@ const OpenBox:React.FC<Props> = (props):ReactElement => {
 
         <Resize styles={{ height: 25 }} />
 
-        <View>
+        <View pointerEvents='none'>
           <Text style={styles.label}>Monto</Text>
           <TextInput
             placeholder='Monto de apertura'
             placeholderTextColor='gray'
-            keyboardType='number-pad'
-            onChangeText={onChange}
+            onChangeText={setAmount}
             style={styles.input}
-            value={amount}
+            value={'0'}
+
           />
         </View>
 
