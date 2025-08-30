@@ -7,7 +7,8 @@ import {
   StyleProp,
   StyleSheet,
   TextInputProps,
-  ViewStyle
+  ViewStyle,
+  TouchableOpacity // Importamos TouchableOpacity
 } from 'react-native'
 
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
@@ -21,10 +22,13 @@ type Props = {
   }
   customProps?: TextInputProps
   containerStyle?: StyleProp<ViewStyle>
+  isPassword?: boolean; // Nuevo prop para indicar si es un campo de contraseña
+  secureTextEntry?: boolean; // Nuevo prop para controlar la visibilidad del texto
+  onToggleSecureEntry?: () => void; // Nuevo prop para manejar el cambio de visibilidad
 }
 export const Input:React.FC<Props> = (props):ReactElement => {
   const styles = useMemo(() => factory({ }), [])
-  const { label, icon, } = props
+  const { label, icon, isPassword, secureTextEntry, onToggleSecureEntry } = props
 
   return (
     <View style={[props.containerStyle, styles.container]}>
@@ -40,8 +44,18 @@ export const Input:React.FC<Props> = (props):ReactElement => {
           <TextInput
             style={styles.input}
             multiline={false}
+            secureTextEntry={secureTextEntry} // Usamos el nuevo prop aquí
             {...props.customProps}
           />
+          {isPassword && ( // Solo mostramos el icono si 'isPassword' es true
+            <TouchableOpacity onPress={onToggleSecureEntry} style={styles.eyeIconContainer}>
+              <Icon
+                name={secureTextEntry ? 'eye-off' : 'eye'} // Cambiamos el icono según secureTextEntry
+                size={24}
+                color={'#697477'}
+              />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
@@ -70,7 +84,8 @@ const factory = (conditions: any) => {
     },
     row: {
       flexDirection: 'row',
-      alignItems: 'center'
+      alignItems: 'center',
+      flex: 1, // Asegura que el contenido ocupe el espacio disponible
     },
     icon: {
       marginRight: 8,
@@ -89,6 +104,9 @@ const factory = (conditions: any) => {
       left: 4,
       bottom: 4,
       fontWeight: 'bold'
+    },
+    eyeIconContainer: { // Nuevo estilo para posicionar el icono del ojo
+      paddingLeft: 10, // Un poco de padding para separar del texto
     }
   })
 }

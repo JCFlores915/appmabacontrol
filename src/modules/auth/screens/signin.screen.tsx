@@ -15,7 +15,7 @@ import logo from '../../../assets/images/logo.png'
 import request from '../../../services/axios'
 
 // Import components
-import { Input, Button, Resize } from '../../../components/common'
+import { Input, Button, Resize } from '../../../components/common' // Asegúrate de que Input se importa correctamente
 import ResetNewPassword from '../components/reset-new-password.component'
 import OpenBox from '../components/open-box.component'
 
@@ -35,6 +35,7 @@ export const SignInScreen: React.FC = ():ReactElement => {
   })
   const [isVisible, setIsVisible] = useState<boolean>(false)
   const [isVisibleBox, setIsVisibleBox] = useState<boolean>(false)
+  const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false); // Nuevo estado para la visibilidad de la contraseña
 
   const onReset = useCallback(() => {
     setValues({
@@ -81,7 +82,7 @@ export const SignInScreen: React.FC = ():ReactElement => {
       .finally(() => {
         setIsLoading(false)
       })
-  }, [values])
+  }, [values, authenticate]) // Añade authenticate a las dependencias si es un useCallback
 
   const onChange = useCallback((value: string, key: 'username' | 'password') => {
     setValues(prevState => ({
@@ -92,6 +93,11 @@ export const SignInScreen: React.FC = ():ReactElement => {
       }
     }))
   }, [])
+
+  // Función para alternar la visibilidad de la contraseña
+  const togglePasswordVisibility = useCallback(() => {
+    setIsPasswordVisible(prev => !prev);
+  }, []);
 
   return (
     <ScrollView
@@ -134,8 +140,10 @@ export const SignInScreen: React.FC = ():ReactElement => {
           <Input
             label='Contraseña'
             icon={{ name: 'lock' }}
+            isPassword={true} // Indicamos que es un campo de contraseña
+            secureTextEntry={!isPasswordVisible} // Controlamos la visibilidad
+            onToggleSecureEntry={togglePasswordVisibility} // Pasamos la función para alternar
             customProps={{
-              secureTextEntry: true,
               onChangeText: (value: string) => onChange(value, 'password'),
               value: values.password.value
             }}
