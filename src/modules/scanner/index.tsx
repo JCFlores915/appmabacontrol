@@ -89,7 +89,7 @@ export const ScannerScreen:React.FC = ({ route }):ReactElement => {
 
 <C>----------------------------</C>
 <C>Colector</C>
-
+1
 
 <C><B>Nota Importante</B></C>
 <C>No permita que el colector le cambie este tipo de recibo.</C>

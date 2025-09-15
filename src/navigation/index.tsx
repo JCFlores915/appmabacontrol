@@ -17,8 +17,8 @@ export const Navigator:React.FC<Props> = React.memo((props):ReactElement => {
   return (
     <NavigationContainer>
       {isLoggedIn ? (
-        <Stack.Navigator initialRouteName='/home'>
-          <Stack.Screen options={{ headerShown: false }} name='/home' component={HomeScreen} />
+        <Stack.Navigator initialRouteName='/home/screens'>
+          <Stack.Screen options={{ headerShown: false }} name='/home/screens' component={HomeScreen} />
           <Stack.Screen 
             options={{
               headerTitle: '',
