@@ -346,7 +346,7 @@ const factory = (conditions: any) => {
       borderRadius: 10,
       paddingHorizontal: 10,
       marginHorizontal: 40,
-      paddingVertical: 5,
+      paddingVertical: 20,
       alignItems: "center",
       justifyContent: "center",
       flexDirection: "row",
