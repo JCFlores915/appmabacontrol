@@ -30,6 +30,7 @@ import { MapScreen } from "../../map";
 import { ListClientScreen } from "../../list-client";
 
 import { FloatingActionsButton } from "../../../components/common";
+
 export type TabName = "ruta" | "clientes";
 
 export interface LatLng {
@@ -63,9 +64,7 @@ export const HomeScreen: React.FC = () => {
 
   const [data, setData] = useState<ClientItem[]>([]);
   const [coords, setCoords] = useState<LatLng[]>([]);
-  const [selectedClient, setSelectedClient] = useState<ClientItem | undefined>(
-    undefined
-  );
+  const [selectedClient, setSelectedClient] = useState<ClientItem | undefined>(undefined);
   const [idfacturaventa, setIdFaturaVenta] = useState<number>(0);
   const [showCuote, setShowCuote] = useState<boolean>(false);
   const [lastClientId, setLastClientId] = useState<number>(0);
@@ -83,9 +82,7 @@ export const HomeScreen: React.FC = () => {
       let isActive = true;
       (async () => {
         try {
-          const response = await request.post("?op=rutasAsignadas", {
-            id: user.id,
-          });
+          const response = await request.post("?op=rutasAsignadas", { id: user.id });
           if (isActive) setData(response.data || []);
         } catch {}
       })();
@@ -113,17 +110,10 @@ export const HomeScreen: React.FC = () => {
     const timeoutId = setTimeout(() => {
       const watchId = Geolocation.watchPosition(
         ({ coords: { latitude, longitude } }) => {
-          markerRef.current?.animateMarkerToCoordinate(
-            { latitude, longitude },
-            7000
-          );
+          markerRef.current?.animateMarkerToCoordinate({ latitude, longitude }, 7000);
         },
         () => {},
-        {
-          distanceFilter: 0,
-          enableHighAccuracy: true,
-          showLocationDialog: true,
-        }
+        { distanceFilter: 0, enableHighAccuracy: true, showLocationDialog: true }
       );
       return () => Geolocation.clearWatch(watchId);
     }, 8000);
@@ -143,18 +133,9 @@ export const HomeScreen: React.FC = () => {
     });
   }, []);
 
-  const goCloseBox = useCallback(
-    () => navigation.navigate("/closethebox", {}),
-    [navigation]
-  );
-  const goExpenses = useCallback(
-    () => navigation.navigate("/expenses"),
-    [navigation]
-  );
-  const goConfig = useCallback(
-    () => navigation.navigate("/match-printer"),
-    [navigation]
-  );
+  const goCloseBox = useCallback(() => navigation.navigate("/closethebox", {}), [navigation]);
+  const goExpenses = useCallback(() => navigation.navigate("/expenses"), [navigation]);
+  const goConfig = useCallback(() => navigation.navigate("/match-printer"), [navigation]);
 
   const onPressedMarker = useCallback(
     (clientId: number) => {
@@ -180,10 +161,7 @@ export const HomeScreen: React.FC = () => {
   const onPressedRoute = useCallback(
     async (latlng: LatLng, id: number, item: ClientItem) => {
       if (!location || location.latitude === 0) {
-        Toast.show(
-          "Ubicación actual no disponible para trazar la ruta.",
-          Toast.SHORT
-        );
+        Toast.show("Ubicación actual no disponible para trazar la ruta.", Toast.SHORT);
         return;
       }
       if (lastClientId === id && coords.length > 0) {
@@ -212,11 +190,7 @@ export const HomeScreen: React.FC = () => {
 
   const onPressedDrawRoute = useCallback(
     (item: ClientItem) => {
-      onPressedRoute(
-        { latitude: Number(item.latitude), longitude: Number(item.longitude) },
-        item.idclient,
-        item
-      );
+      onPressedRoute({ latitude: Number(item.latitude), longitude: Number(item.longitude) }, item.idclient, item);
     },
     [onPressedRoute]
   );
@@ -231,11 +205,7 @@ export const HomeScreen: React.FC = () => {
   return (
     <View style={styles.screen}>
       {/* Tabs */}
-      <Tabs
-        activeTab={activeTab}
-        onChangeTab={handleChangeTab}
-        safeTop={safeTop}
-      />
+      <Tabs activeTab={activeTab} onChangeTab={handleChangeTab} safeTop={safeTop} />
 
       {/* Contenido */}
       {activeTab === "ruta" ? (
@@ -268,51 +238,48 @@ export const HomeScreen: React.FC = () => {
         </View>
       )}
 
-      {/* Botón logout arriba derecha (lo dejamos igual) */}
+      {/* Botón logout arriba derecha */}
       <View style={[styles.abs, { top: safeTop + 15, right: 12, zIndex: 999 }]}>
         <TouchableOpacity onPress={onPressedLogout}>
           <Icon name="logout" size={30} color="#000" />
         </TouchableOpacity>
       </View>
 
-      {/* Acciones sobre la ruta (solo en mapa) */}
-      <View
-        pointerEvents="box-none"
-        style={[
-          styles.abs,
-          {
-            top: 30 + safeTop,
-            left: 0,
-            right: 0,
-            zIndex: 998,
-            height: activeTab === "ruta" ? 150 : 0,
-          },
-        ]}
-      >
-        {selectedClient && activeTab === "ruta" && (
-          <View style={styles.actionWrap}>
-            <TouchableOpacity
-              onPress={() => onPressedMarker(selectedClient.idclient)}
-            >
-              <View style={styles.actionButtonDark}>
-                <Text style={styles.actionButtonText}>Realizar pago</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        )}
+      {/* === Acciones inferiores junto al FAB (solo en "ruta") === */}
+      {activeTab === "ruta" && (selectedClient || showCuote) && (
+        <View
+          pointerEvents="box-none"
+          style={[styles.bottomActionsWrap, { bottom: safeBottom + 24 }]}
+        >
+          <View style={styles.bottomActionsRow}>
+            {selectedClient && (
+              <TouchableOpacity
+                onPress={() => onPressedMarker(selectedClient.idclient)}
+                activeOpacity={0.85}
+                style={[styles.pill, styles.pillPrimary, { marginRight: 8 }]}
+              >
+                <Text style={[styles.pillText, styles.pillTextPrimary]}>
+                  Realizar pago
+                </Text>
+              </TouchableOpacity>
+            )}
 
-        {showCuote && activeTab === "ruta" && (
-          <View style={styles.actionWrap}>
-            <TouchableOpacity onPress={() => newCoute(idfacturaventa)}>
-              <View style={styles.actionButtonBlue}>
-                <Text style={styles.actionButtonText}>Nueva Cuota</Text>
-              </View>
-            </TouchableOpacity>
+            {showCuote && (
+              <TouchableOpacity
+                onPress={() => newCoute(idfacturaventa)}
+                activeOpacity={0.85}
+                style={[styles.pill, styles.pillSoft]}
+              >
+                <Text style={[styles.pillText, styles.pillTextSoft]}>
+                  Nueva cuota
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
-        )}
-      </View>
+        </View>
+      )}
 
-      {/* === Nuevo: FAB flotante con speed dial === */}
+      {/* FAB flotante con speed dial (a la derecha) */}
       <FloatingActionsButton
         safeBottom={safeBottom}
         onCloseRoute={goCloseBox}
@@ -342,31 +309,47 @@ const factory = (conditions: any) => {
 
     abs: { position: "absolute" },
 
-    actionWrap: {
-      borderRadius: 10,
-      paddingHorizontal: 10,
-      marginHorizontal: 40,
-      paddingVertical: 20,
+    // ====== NUEVO: acciones inferiores a la par del FAB ======
+    bottomActionsWrap: {
+      position: "absolute",
+      left: 16,
+      right: 88, // deja espacio para el FAB (56px + márgenes)
+      zIndex: 998,
+    },
+    bottomActionsRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "center",
+      justifyContent: "flex-start",
+    },
+    // Chips/píldoras estandarizadas
+    pill: {
+      minHeight: 40,
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      borderWidth: 1,
       alignItems: "center",
       justifyContent: "center",
-      flexDirection: "row",
+      // sombra ligera
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.08,
+      shadowRadius: 1,
+      elevation: 1,
     },
-    actionButtonDark: {
-      marginVertical: 10,
-      backgroundColor: "#000",
-      paddingHorizontal: 20,
-      paddingVertical: 10,
-      borderRadius: 200,
-      minWidth: 220,
+    pillPrimary: {
+      backgroundColor: "#115F83",
+      borderColor: "#115F83",
     },
-    actionButtonBlue: {
-      marginVertical: 10,
-      backgroundColor: "blue",
-      paddingHorizontal: 20,
-      paddingVertical: 10,
-      borderRadius: 200,
-      minWidth: 220,
+    pillSoft: {
+      backgroundColor: "#F0F6FA",
+      borderColor: "#D3E6F0",
     },
-    actionButtonText: { color: "#fff", textAlign: "center" },
+    pillText: {
+      fontWeight: "700",
+      fontSize: 14,
+    },
+    pillTextPrimary: { color: "#FFF" },
+    pillTextSoft: { color: "#115F83" },
   });
 };
